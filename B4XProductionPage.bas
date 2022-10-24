@@ -16,6 +16,9 @@ Sub Class_Globals
 	Private objConfig As clsConfig
 	'''''''''''''''''''''''''''''''''''	
 	Private lstProduct As List
+	Private Label1 As Label
+	Private ScrollView1 As ScrollView
+	Private dybtn As cvDynamicButton
 End Sub
 
 'You can add more parameters here.
@@ -34,6 +37,15 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
 	createMenu
 	B4XPages.SetTitle(Me, "Production")
+	dybtn.Initialize(Me, "dybtn_click")
+	' Please note that dimension of ScrollView is different from
+	' dimension of panel of ScrollView
+	Dim svHeight As Double = 100%y-70dip 'ScrollView1.Height
+	Dim svWidth As Double = 100%x-20dip 'ScrollView1.Width
+	LogColor("ScrollView's height: " & svHeight, Colors.Blue)
+	LogColor("ScrollView's width: " & svWidth, Colors.Blue)
+	dybtn.setPanelHeightWidth(svHeight, svWidth)
+	' ScrollView1.Panel.Width = svWidth
 	If lstProduct.Size = 0 Then
 		sendBack4AppRequest
 		
@@ -100,7 +112,17 @@ Sub sendBack4AppRequest()
 			Dim lst1 As List = map1.Get("results")
 			lstToJsonString(lst1)
 			' ListView1.Clear
-			' fillTheList(lst1)
+			Dim isFilled As Boolean = fillTheList(lst1)
+			If isFilled Then
+				ScrollView1.Panel.RemoveAllViews
+				' Cast from double to int
+				ScrollView1.Panel.Height = dybtn.InnerPanelHeight
+				
+				ScrollView1.Panel.Width = 100%x-20dip
+				' CreateButton would trigger the event - AddButtonHandler
+				' to add button(s) to existing scrollview
+				dybtn.CreateButtons
+			End If
 		Catch
 			Log(LastException)
 		End Try
@@ -108,15 +130,43 @@ Sub sendBack4AppRequest()
 	j.Release
 End Sub
 
-Sub fillTheList(i_lst As List)
+Sub fillTheList(i_lst As List) As Boolean
 	If i_lst.IsInitialized = False Then
-		Return
+		Return False
 	End If
-	
+	If modCommon.listOfProduct.IsInitialized Then
+		modCommon.listOfProduct.clear
+	Else
+		modCommon.listOfProduct.Initialize
+	End If
+	' Clone the responsed list to public product list
+	For Each entry As Map In i_lst
+		Dim obj As clsProduct
+		obj.Initialize
+		Dim isDeSer As Boolean = obj.myDeserialize(entry)
+		If isDeSer Then
+			modCommon.listOfProduct.Add(obj)
+		End If
+	Next
+	Return True
 End Sub
 
-Sub createButtonArray()
-	
+' Event handler 
+Sub AddButtonHandler(mapRes As Map)
+	Dim btn As Button = mapRes.Get("button")
+	Dim x As Int = mapRes.Get("x")
+	Dim y As Int = mapRes.Get("y")
+	Dim w As Int = mapRes.Get("w")
+	Dim h As Int = mapRes.Get("h")
+	Dim row As Int = mapRes.Get("r")
+	Dim col As Int = mapRes.Get("c")
+	ScrollView1.Panel.AddView(btn, x, y, w, h)
+	Log("Button added: " & $"(${row}, ${col})"$)
+End Sub
+
+' Event handler
+Sub dybtn_click(res As String)
+	ToastMessageShow(res, False)
 End Sub
 
 Sub lstToJsonString(i_lst As List) As String

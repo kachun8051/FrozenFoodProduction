@@ -5,6 +5,7 @@ Type=Class
 Version=11.2
 @EndOfDesignText@
 Sub Class_Globals
+	Private m_objectid as String
 	Private m_itemnum As String
 	' English name of item
 	Private m_itemname As String
@@ -47,6 +48,41 @@ End Sub
 Public Sub getItemPriceX10() As Int
 	Dim ret As Int = Round2(m_itemprice, 1) * 10
 	Return ret 
+End Sub
+
+' Deserialize means "Eat" the input map coming from cloud,
+' Change it into object
+Public Sub myDeserialize(i_map As Map) As Boolean
+	If i_map.IsInitialized = False Then
+		Return False
+	End If
+	Try
+		If i_map.ContainsKey("objectId") Then
+			m_objectid = i_map.Get("objectId")
+		End If
+		If i_map.ContainsKey("itemnum") Then
+			m_itemnum = i_map.Get("itemnum")
+		End If
+		If i_map.ContainsKey("itemname") Then
+			m_itemname = i_map.Get("itemname")
+		End If
+		If i_map.ContainsKey("itemname2") Then
+			m_itemname2 = i_map.Get("itemname2")
+		End If
+		If i_map.ContainsKey("itemuom") Then
+			m_itemuom = i_map.Get("itemuom")
+		End If
+		If i_map.ContainsKey("itemstandardweight") Then
+			m_itemstandardweight = i_map.Get("itemstandardweight")
+		End If
+		If i_map.ContainsKey("itemprice") Then
+			m_itemprice = i_map.Get("itemprice")
+		End If
+		Return True
+	Catch
+		Log(LastException)
+		Return False
+	End Try	
 End Sub
 
 Public Sub getProductBarcode(weight As Double) As String

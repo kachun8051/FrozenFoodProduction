@@ -26,6 +26,7 @@ Library5=xui views
 Library6=json
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
 Module1=|relative|..\B4XItemPage
+Module10=Starter
 Module2=|relative|..\B4XMainPage
 Module3=|relative|..\B4XProductionPage
 Module4=|relative|..\B4XRecordPage
@@ -33,10 +34,10 @@ Module5=|relative|..\clsConfig
 Module6=|relative|..\clsProduct
 Module7=|relative|..\cvDynamicButton
 Module8=|relative|..\DrawerManager
-Module9=Starter
+Module9=|relative|..\modCommon
 NumberOfFiles=9
 NumberOfLibraries=6
-NumberOfModules=9
+NumberOfModules=10
 Version=11.2
 @EndOfDesignText@
 #Region  Project Attributes 
@@ -44,7 +45,7 @@ Version=11.2
 	#VersionCode: 1
 	#VersionName: 
 	'SupportedOrientations possible values: unspecified, landscape or portrait.
-	#SupportedOrientations: portrait
+	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: False
 #End Region
 
