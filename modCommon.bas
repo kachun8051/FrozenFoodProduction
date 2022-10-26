@@ -11,5 +11,7 @@ Sub Process_Globals
 	'These variables can be accessed from all modules.
 	
 	' This is list of product which is accessible for other activities
-	Public listOfProduct As List
+	' Public listOfProduct As List
+	' The key is item number while the value is clsProduct 
+	Public mapOfProduct As Map
 End Sub

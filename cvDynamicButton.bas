@@ -49,11 +49,16 @@ End Sub
 ' Note: Number of Row is dependent of number of product fetched from cloud
 Public Sub getNumOfRow() As Int
 	If m_NumOfRow = -1 Then
-		If modCommon.listOfProduct.IsInitialized = False Then
-			Return 100%y-70dip
+		'If modCommon.listOfProduct.IsInitialized = False Then
+		'	Return 100%y-70dip
+		'Else
+		'	m_NumOfRow = Ceil(modCommon.listOfProduct.Size / m_NumOfCol)			
+		'End If	
+		If modCommon.mapOfProduct.IsInitialized = False Then
+			Return 100%y - 70dip
 		Else
-			m_NumOfRow = Ceil(modCommon.listOfProduct.Size / m_NumOfCol)			
-		End If	
+			m_NumOfRow = Ceil(modCommon.mapOfProduct.Size / m_NumOfCol)
+		End If
 	End If
 	Return m_NumOfRow
 End Sub
@@ -86,10 +91,13 @@ End Sub
 
 Public Sub CreateButtons() As Boolean
     ' Note: CreateButton would access listOfProduct in modCommon
-	If modCommon.listOfProduct.IsInitialized = False Then
+	'If modCommon.listOfProduct.IsInitialized = False Then
+	'	Return False
+	'End If
+	If modCommon.mapOfProduct.IsInitialized = False Then
 		Return False
 	End If
-	Dim NumOfProduct As Int = modCommon.listOfProduct.Size
+	Dim NumOfProduct As Int = modCommon.mapOfProduct.Size ' modCommon.listOfProduct.Size
 	m_NumOfRow = getNumOfRow
 	LogColor("NumOfRow: " & m_NumOfRow, Colors.Blue) 
 	For c = 0 To m_NumOfCol-1
@@ -98,7 +106,7 @@ Public Sub CreateButtons() As Boolean
 			If idx >= NumOfProduct Then
 				Exit
 			End If
-			Dim obj As clsProduct = modCommon.listOfProduct.Get(idx)
+			Dim obj As clsProduct = modCommon.mapOfProduct.GetValueAt(idx) 'modCommon.listOfProduct.Get(idx)
 			Dim ButtonX As Button
 			Dim PosX As Pos
 			PosX.x = c

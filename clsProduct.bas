@@ -5,7 +5,7 @@ Type=Class
 Version=11.2
 @EndOfDesignText@
 Sub Class_Globals
-	Private m_objectid as String
+	Private m_objectid As String
 	Private m_itemnum As String
 	' English name of item
 	Private m_itemname As String
@@ -19,6 +19,10 @@ End Sub
 'Initializes the object. You can add parameters to this method if needed.
 Public Sub Initialize
 	
+End Sub
+
+Public Sub getProductInfo() As String
+	Return m_itemname2 & "(#" & m_itemnum & ")"
 End Sub
 
 Public Sub getItemnum() As String
@@ -85,10 +89,15 @@ Public Sub myDeserialize(i_map As Map) As Boolean
 	End Try	
 End Sub
 
+Public Sub calcPriceByWeight(actWeight As Double) As Double
+	Dim sellingprice As Double = (actWeight / m_itemstandardweight) * m_itemprice
+	Return sellingprice
+End Sub
+
 Public Sub getProductBarcode(weight As Double) As String
 	Dim weightx10 As Int = Round2(weight, 1) * 10
 	Dim weightPart As String = zeroLeading(weightx10)
-	Dim packPrice As Double = (weight * m_itemprice) / m_itemuom
+	Dim packPrice As Double = (weight * m_itemprice) / 100
 	Dim packPricex10 As Int = Round2(packPrice, 1) * 10
 	Dim packPricePart As String = zeroLeading(packPricex10)
 	Return calcOddParity("0" & m_itemnum & packPricePart & weightPart)

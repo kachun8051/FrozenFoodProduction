@@ -11,6 +11,9 @@
 	    android:normalScreens="true" 
 	    android:smallScreens="true" 
 	    android:anyDensity="true"/>
+	<uses-permission android:name="android.permission.BLUETOOTH"/>
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>
@@ -23,20 +26,29 @@
 			android:launchMode="singleTop"
 			android:name=".main"
 			android:label="Frozen Food Production"
-			android:screenOrientation="unspecified">
+			android:screenOrientation="unspecified"
+			android:exported="true">
 			<intent-filter>
 			   <action android:name="android.intent.action.MAIN" />
 			   <category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 			
 		</activity>
-		<service android:name=".starter">
+		<service
+			android:name=".starter"
+			android:exported="true">
 		</service>
-		<receiver android:name=".starter$starter_BR">
+		<receiver
+			android:name=".starter$starter_BR"
+			android:exported="true">
 		</receiver>
-		<service android:name=".httputils2service">
+		<service
+			android:name=".httputils2service"
+			android:exported="true">
 		</service>
-		<receiver android:name=".httputils2service$httputils2service_BR">
+		<receiver
+			android:name=".httputils2service$httputils2service_BR"
+			android:exported="true">
 		</receiver>
 	</application>
 </manifest>
