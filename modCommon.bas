@@ -15,3 +15,17 @@ Sub Process_Globals
 	' The key is item number while the value is clsProduct 
 	Public mapOfProduct As Map
 End Sub
+
+Public Sub NowInUTC() As String
+	Dim timezone As Int = DateTime.TimeZoneOffset
+	Dim df As String = DateTime.DateFormat
+	DateTime.SetTimeZone(8) 'only need to set it once so the process is now based on UTC timezone.
+	DateTime.DateFormat = "MM/dd/yyyy HH:mm:ss z"
+	Dim utc As String = DateTime.Date(DateTime.Now)
+	' Dim ticks As Long = DateTime.DateParse("03/07/2015 11:11:44" & " EST")
+	Log(utc)
+	DateTime.SetTimeZone(timezone)
+	DateTime.DateFormat = df
+	Return utc
+	
+End Sub

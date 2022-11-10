@@ -7,12 +7,24 @@ Version=11.2
 Sub Class_Globals
 	Private m_objectid As String
 	Private m_itemnum As String
+	
 	' English name of item
 	Private m_itemname As String
+	
 	' Chinese name of item
 	Private m_itemname2 As String
+	
+	' Unit of measure. For example, [100g, kg, pound, ...]
 	Private m_itemuom As String
+	
+	' Unit of measure equavient to how many gram? For example, [100, 1000, 453.59]
+	Private m_itemuom2 As Double
+	
+	' For example, standard weight per pcs [100g, 150g, 200g, ...]   
 	Private m_itemstandardweight As Int
+	 
+	' item price per item uom
+	' For example, product A cost $26 per 100g
 	Private m_itemprice As Double
 End Sub
 
@@ -25,8 +37,15 @@ Public Sub getProductInfo() As String
 	Return m_itemname2 & "(#" & m_itemnum & ")"
 End Sub
 
+
+
+#Region Getter
+Public Sub getObjectId() As String
+	Return m_objectid
+End Sub
+
 Public Sub getItemnum() As String
-	Return m_itemname
+	Return m_itemnum
 End Sub
 
 Public Sub getItemname() As String
@@ -41,6 +60,10 @@ Public Sub getItemuom() As String
 	Return m_itemuom
 End Sub
 
+Public Sub getItemuom2() As Double
+	Return m_itemuom2
+End Sub
+
 Public Sub getItemstandardweight As Int
 	Return m_itemstandardweight
 End Sub
@@ -53,6 +76,38 @@ Public Sub getItemPriceX10() As Int
 	Dim ret As Int = Round2(m_itemprice, 1) * 10
 	Return ret 
 End Sub
+#End Region
+
+#Region Setter
+Public Sub setItemnum(value As String)
+	m_itemnum = value
+End Sub
+
+Public Sub setItemname(value As String)
+	m_itemname = value
+End Sub
+
+Public Sub setItemname2(value As String)
+	m_itemname2 = value
+End Sub
+
+Public Sub setItemuom(value As String)
+	m_itemuom = value
+End Sub
+
+Public Sub setItemuom2(value As Double)
+	m_itemuom2 = value
+End Sub
+
+Public Sub setItemstandardweight(value As Int)
+	m_itemstandardweight = value
+End Sub
+
+Public Sub setItemPrice(value As Double)
+	m_itemprice = value
+End Sub
+
+#End Region
 
 ' Deserialize means "Eat" the input map coming from cloud,
 ' Change it into object
@@ -76,6 +131,9 @@ Public Sub myDeserialize(i_map As Map) As Boolean
 		If i_map.ContainsKey("itemuom") Then
 			m_itemuom = i_map.Get("itemuom")
 		End If
+		If i_map.ContainsKey("itemuom2") Then
+			m_itemuom2 = i_map.Get("itemuom2")
+		End If
 		If i_map.ContainsKey("itemstandardweight") Then
 			m_itemstandardweight = i_map.Get("itemstandardweight")
 		End If
@@ -90,14 +148,14 @@ Public Sub myDeserialize(i_map As Map) As Boolean
 End Sub
 
 Public Sub calcPriceByWeight(actWeight As Double) As Double
-	Dim sellingprice As Double = (actWeight / m_itemstandardweight) * m_itemprice
+	Dim sellingprice As Double = (actWeight * m_itemprice) / 100
 	Return sellingprice
 End Sub
 
 Public Sub getProductBarcode(weight As Double) As String
 	Dim weightx10 As Int = Round2(weight, 1) * 10
 	Dim weightPart As String = zeroLeading(weightx10)
-	Dim packPrice As Double = (weight * m_itemprice) / 100
+	Dim packPrice As Double = (weight * m_itemprice) / m_itemuom2
 	Dim packPricex10 As Int = Round2(packPrice, 1) * 10
 	Dim packPricePart As String = zeroLeading(packPricex10)
 	Return calcOddParity("0" & m_itemnum & packPricePart & weightPart)

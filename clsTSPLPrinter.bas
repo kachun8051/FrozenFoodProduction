@@ -60,7 +60,7 @@ Public Sub Connect As ResumableSub
 	InputListAsync(l, "Choose a printer", 0, False) 'show list with paired devices
 	Wait For InputList_Result (Index As Int)
 	If Index <> DialogResponse.CANCEL Then
-		Log("Selected place: " & l.Get(Index))
+		Log("Selected place (Printer): " & l.Get(Index))
 		Serial1.Connect(PairedDevices.Get(l.Get(Index))) 'convert the name to mac address
 		Return True
 	End If
@@ -69,12 +69,58 @@ End Sub
 
 Public Sub DisConnect
 	' Disconnect the printer
-	Serial1.Disconnect
+	If Serial1.IsInitialized Then
+		Serial1.Disconnect
+	End If	
+	If Astream.IsInitialized Then
+		Astream.close
+	End If
 	flagIsConn = False
 End Sub
 
 Public Sub FlushClose
 	Astream.SendAllAndClose
+End Sub
+#End Region
+
+#Region Internal_Serial_Events
+Private Sub Serial1_Connected (Success As Boolean)
+	' Internal Serial Events
+	If Success Then
+		Astream.Initialize(Serial1.InputStream, Serial1.OutputStream, "astream")
+		flagIsConn = True
+		flagConnError = ""
+		Serial1.Listen
+	Else
+		flagIsConn = False
+		flagConnError = LastException.Message
+	End If
+	If SubExists(CallBack, EventName & "_Connected") Then
+		CallSub2(CallBack, EventName & "_Connected", Success)
+	End If
+End Sub
+#End Region
+
+#Region Internal_AsyncStream_Events
+' Internal AsyncStream Events
+Private Sub AStream_NewData (Buffer() As Byte)
+	If SubExists(CallBack, EventName & "_NewData") Then
+		CallSub2(CallBack, EventName & "_NewData", Buffer)
+	End If
+	Log("Data " & Buffer(0))
+End Sub
+
+Private Sub AStream_Error
+	If SubExists(CallBack, EventName & "_Error") Then
+		CallSub(CallBack, EventName & "_Error")
+	End If
+End Sub
+
+Private Sub AStream_Terminated
+	flagIsConn = False
+	If SubExists(CallBack, EventName & "_Terminated") Then
+		CallSub(CallBack, EventName & "_Terminated")
+	End If
 End Sub
 #End Region
 
@@ -369,46 +415,5 @@ Private Sub ImageToStr(BMP As Bitmap) As String
 		Next
 	Next
 	Return sb.ToString
-End Sub
-#End Region
-
-#Region Internal_Serial_Events
-Private Sub Serial1_Connected (Success As Boolean)
-	' Internal Serial Events
-	If Success Then
-		Astream.Initialize(Serial1.InputStream, Serial1.OutputStream, "astream")
-		flagIsConn = True
-		flagConnError = ""
-		Serial1.Listen
-	Else
-		flagIsConn = False
-		flagConnError = LastException.Message
-	End If
-	If SubExists(CallBack, EventName & "_Connected") Then
-		CallSub2(CallBack, EventName & "_Connected", Success)
-	End If
-End Sub
-#End Region
-
-#Region Internal_AsyncStream_Events
-' Internal AsyncStream Events
-Private Sub AStream_NewData (Buffer() As Byte)
-	If SubExists(CallBack, EventName & "_NewData") Then
-		CallSub2(CallBack, EventName & "_NewData", Buffer)
-	End If
-	Log("Data " & Buffer(0))
-End Sub
-
-Private Sub AStream_Error
-	If SubExists(CallBack, EventName & "_Error") Then
-		CallSub(CallBack, EventName & "_Error")
-	End If
-End Sub
-
-Private Sub AStream_Terminated
-	flagIsConn = False
-	If SubExists(CallBack, EventName & "_Terminated") Then
-		CallSub(CallBack, EventName & "_Terminated")
-	End If
 End Sub
 #End Region

@@ -8,37 +8,40 @@ Sub Class_Globals
 	Private Root As B4XView 'ignore
 	Private xui As XUI 'ignore
 	
-	' Drawer Menu Variables ''''''''''''
+	#Region Drawer_Menu_Variables
 	Private drManager As DrawerManager
 	Private clvDrawer As CustomListView
 	Private clvIcon As Label
 	Private clvMenuLabel As Label
 	Private objConfig As clsConfig
-	'''''''''''''''''''''''''''''''''''	
+	#End Region	
 	Private lstProduct As List
 	Private lblData As Label
 	Private lblReading As Label
-	Private currValRec As Double
+	Private currValue As Double
+'	Private currValRec As Double
 	
 	Private ScrollView1 As ScrollView
 	Private dybtn As cvDynamicButton
-	Private btPrinter As clsTSPLPrinter
+	' BlueTooth Label Printer object
+'	Private btPrinter As clsTSPLPrinter
+	' BlueTooth Weighting Scale object
+	' Private btScale As clsSerialScale
 	' Serial for weighting scale
 	Private BTA As BluetoothAdmin
-	Private serialScale As Serial
-	Private flagIsScaleConn As Boolean 'ignore
+	Private mySerial As Serial
 	Private lstOfFoundDevices As List
-	Dim AST As AsyncStreamsText
 	Type BlueTooth_NameAndMac (Name As String, Mac As String)
-	Dim connectedDevices As BlueTooth_NameAndMac
 End Sub
 
 'You can add more parameters here.
 Public Sub Initialize As Object
 	objConfig.Initialize
 	lstProduct.Initialize
-	btPrinter.Initialize(Me, "btPrinter")
-	currValRec = -1
+	' btPrinter.Initialize(Me, "btPrinter")
+	' btScale.Initialize(Me, "btScale")
+	mySerial.Initialize("mySerial")
+	currValue = -1	
 	Return Me
 End Sub
 
@@ -46,14 +49,8 @@ End Sub
 Private Sub B4XPage_Created (Root1 As B4XView)
 	Root = Root1
 
-	
-	' Dim mi_1 As B4AMenuItem = B4XPages.AddMenuItem(Me, "test")
-	' mi_1.AddToBar = True
-	
-	flagIsScaleConn = False
 	BTA.Initialize("BTA")
-	serialScale.Initialize("SERIALSCALE")
-	lstOfFoundDevices.Initialize	
+	lstOfFoundDevices.Initialize
 	
 	'load the layout to Root
 	drManager.Initialize(Me, "Drawer", Root, 200dip)
@@ -63,9 +60,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	B4XPages.GetManager.LogEvents = True
 	B4XPages.AddMenuItem(Me, "Connect Bluetooth")
 	B4XPages.AddMenuItem(Me, "Disconnect Bluetooth")
-	
-	'drManager.
-	
+		
 	createMenu
 	B4XPages.SetTitle(Me, "Production")
 	dybtn.Initialize(Me, "dybtn_click")
@@ -78,8 +73,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	dybtn.setPanelHeightWidth(svHeight, svWidth)
 	' ScrollView1.Panel.Width = svWidth
 	If lstProduct.Size = 0 Then
-		sendBack4AppRequest
-		
+		' sendBack4AppRequest
+		sendProductIntent("query")		
 	End If
 End Sub
 
@@ -104,15 +99,10 @@ End Sub
 
 Private Sub B4XPage_Disappear
 	drManager.B4XPageDisappear
-	' If UserClosed Then
-		If AST.IsInitialized Then
-			AST.Close
-		End If
-		If serialScale.IsInitialized Then
-			serialScale.Disconnect
-		End If
-		' Activity.Finish
-	' End If
+'	If IsPaused( svcSerialScale) = False Then
+'		StopService(svcSerialScale)
+'	End If
+'	mySerial.Disconnect
 End Sub
 
 ' For DrawerMenu
@@ -156,39 +146,154 @@ Private Sub createMenu
 	Next
 End Sub
 
-Sub sendBack4AppRequest()
-	Dim Job As HttpJob
-	Job.initialize("request", Me)
-	Job.Download("https://parseapi.back4app.com/classes/Product")
-	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
-	Job.GetRequest.SetHeader("X-Parse-Master-Key", objConfig.masterkey)
-	Wait For (Job) JobDone(j As HttpJob)
-	Log("B4XProductionPage.sendBack4AppRequest: " & j.Success)
-	If j.Success Then
-		Log(j.GetString)
-		Try
-			Dim jparser As JSONParser
-			jparser.Initialize(j.GetString)
-			Dim map1 As Map = jparser.Nextobject
-			Dim lst1 As List = map1.Get("results")
-			lstToJsonString(lst1)
-			' ListView1.Clear
-			Dim isFilled As Boolean = fillTheList(lst1)
-			If isFilled Then
-				ScrollView1.Panel.RemoveAllViews
-				' Cast from double to int
-				ScrollView1.Panel.Height = dybtn.InnerPanelHeight
-				ScrollView1.Panel.Width = 100%x-20dip
-				' CreateButton would trigger the event - AddButtonHandler
-				' to add button(s) to existing scrollview
-				dybtn.CreateButtons
-			End If
-		Catch
-			Log(LastException)
-		End Try
+Sub sendScaleIntent(mac As String)
+	If IsPaused(svcSerialScale) = False Then
+		StopService(svcSerialScale)
 	End If
-	j.Release
+	Dim inte As Intent
+	inte.Initialize("", "")
+	inte.SetComponent(Application.PackageName & "/.svcserialscale")
+	' pidProduction is page id of B4XProductionPage
+	inte.PutExtra("senderid", "pidProduction")
+	inte.PutExtra("mac", mac)
+	StartService(inte)
 End Sub
+
+Sub sendFinishedProductIntent(task As String, macaddr As String, fp As clsFinishedProduct)
+	Dim inte As Intent
+	inte.Initialize("", "")
+	inte.SetComponent(Application.PackageName & "/.svcback4appfinishedproduct")
+	' pidProduction is page id of B4XProductionPage
+	inte.PutExtra("senderid", "pidProduction")
+	inte.PutExtra("task", task)
+	Select task
+		Case "btconnect"
+			inte.PutExtra("param", macaddr)
+		Case "postandprint"
+			inte.PutExtra("param", fp.mySerialize)
+	End Select
+	StartService(inte)
+End Sub
+
+Sub sendProductIntent(task As String)
+	Dim inte As Intent
+	inte.Initialize("", "")
+	inte.SetComponent(Application.PackageName & "/.svcback4appproduct")
+	' pidProduction is page id of B4XProductionPage
+	inte.PutExtra("senderid", "pidProduction")
+	inte.PutExtra("task", task)
+	StartService(inte)
+End Sub
+
+Sub getProductResponse(mapRes As Map)
+	StopService(svcBack4AppProduct)
+	Dim isSuccess As Boolean = mapRes.Get("issuccess")
+	If isSuccess = False Then
+		Msgbox2Async("Product Menu retrieval error!", "Menu Retrieval", "OK", "", "", Null, True)
+		Return
+	End If
+	Dim lstOfProduct As List = mapRes.Get("datalist")
+	Dim isFilled As Boolean = fillTheList(lstOfProduct)
+	If isFilled Then
+		ScrollView1.Panel.RemoveAllViews
+		' Cast from double to int
+		ScrollView1.Panel.Height = dybtn.InnerPanelHeight
+		ScrollView1.Panel.Width = 100%x-20dip
+		' CreateButton would trigger the event - AddButtonHandler
+		' to add button(s) to existing scrollview
+		dybtn.CreateButtons
+	End If
+End Sub
+
+Sub getFinishedProductPostedResponse(mapRes As Map)
+	' StopService(svcBack4AppFinishedProduct)
+	ProgressDialogHide
+	Dim isSuccess As Boolean = mapRes.Get("issuccess")
+	If isSuccess = False Then
+		Dim errmsg As String = "Finished Product post error!" & CRLF & mapRes.Get("errmsg").As(String)
+		' Msgbox2Async("Error: " & CRLF & mapRes.Get("errmsg").As(String), "Operation Error", "OK", "", "", Null, True)
+		Msgbox2Async(errmsg, "Posting Finished Product", "OK", "", "", Null, True)
+		Return
+	End If
+	Dim objId As String = mapRes.Get("objectid")
+	Dim itemnum_1 As String = mapRes.Get("itemnum")
+	Dim itemname_1 As String = mapRes.Get("itemname")
+	Log("Finished Product Posted: " & objId)
+	Dim msg As String = $"Item: ${itemname_1} (${itemnum_1}) is posted and printed"$
+	ToastMessageShow(msg, True)
+End Sub
+
+Sub getBtConnectedResponse(isbtOn As Boolean)
+	Log("Connected: " & isbtOn)	
+End Sub
+
+Sub getBtDisconnectedResponse(isbtOn As Boolean)
+	Log("Disconnected: " & isbtOn)
+End Sub
+
+'Sub sendBack4AppPost(fp As clsFinishedProduct) As ResumableSub
+'	Dim isSuccess As Boolean = False
+'	Dim objid As String = ""
+'	Dim Job As HttpJob
+'	Job.initialize("post", Me)
+'	Job.PostString("https://parseapi.back4app.com/classes/Production", fp.JsonStringForPost)
+'	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
+'	Job.GetRequest.SetHeader("X-Parse-REST-API-Key", objConfig.ApiKey)
+'	Job.GetRequest.SetContentType("application/json")
+'	ProgressDialogShow2("Posting...", True)
+'	Wait For JobDone(j As HttpJob)
+'	ProgressDialogHide
+'	If j.Success Then
+'		Log(j.GetString)
+'		Try
+'			Dim jparser As JSONParser
+'			jparser.Initialize(j.GetString)
+'			Dim map2 As Map = jparser.NextObject
+'			objid = map2.Get("objectId")
+'			Msgbox2Async($"objectId: ${map2.Get("objectId")}${CRLF}createdAt: ${map2.Get("createdAt")}"$, "Response","Done","","",Null, True)
+'			isSuccess = True
+'		Catch
+'			Log(LastException)
+'			isSuccess = False
+'		End Try
+'	End If
+'	j.Release
+'	Return CreateMap("issuccess": isSuccess, "objectid": objid)
+'End Sub
+
+'Sub sendBack4AppRequest()
+'	Dim Job As HttpJob
+'	Job.initialize("request", Me)
+'	Job.Download("https://parseapi.back4app.com/classes/Product")
+'	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
+'	Job.GetRequest.SetHeader("X-Parse-Master-Key", objConfig.masterkey)
+'	Wait For (Job) JobDone(j As HttpJob)
+'	Log("B4XProductionPage.sendBack4AppRequest: " & j.Success)
+'	If j.Success Then
+'		Log(j.GetString)
+'		Try
+'			Dim jparser As JSONParser
+'			jparser.Initialize(j.GetString)
+'			Dim map1 As Map = jparser.Nextobject
+'			Dim lst1 As List = map1.Get("results")
+'			' lstToJsonString(lst1)
+'			' ListView1.Clear
+'			Dim isFilled As Boolean = fillTheList(lst1)
+'			If isFilled Then
+'				ScrollView1.Panel.RemoveAllViews
+'				' Cast from double to int
+'				ScrollView1.Panel.Height = dybtn.InnerPanelHeight
+'				ScrollView1.Panel.Width = 100%x-20dip
+'				' CreateButton would trigger the event - AddButtonHandler
+'				' to add button(s) to existing scrollview
+'				dybtn.CreateButtons
+'			End If
+'		Catch
+'			Log(LastException)
+'		End Try
+'	End If
+'	j.Release
+'End Sub
 
 Sub fillTheList(i_lst As List) As Boolean
 	If i_lst.IsInitialized = False Then
@@ -226,84 +331,46 @@ End Sub
 Sub BTA_StateChanged (NewState As Int, OldState As Int)
 	
 End Sub
-
-Sub BTA_DiscoveryFinished
-	ProgressDialogHide
-	If lstOfFoundDevices.Size = 0 Then
-		ToastMessageShow("Bluetooth devices not found !!!"&CRLF&"Please try again !",True)
-	Else
-		Dim il As List
-		il.Initialize
-		For i=0 To lstOfFoundDevices.Size-1
-			Dim nm As BlueTooth_NameAndMac
-			nm = lstOfFoundDevices.Get(i)
-			il.Add(nm.Name)
-		Next
-		
-		InputListAsync(il, "Take from a paired device", 0, False)
-		Wait For InputList_Result (Index As Int)
-		If Index <> DialogResponse.CANCEL Then
-			connectedDevices = lstOfFoundDevices.Get(Index)
-			ProgressDialogShow("Connect with : "&CRLF&connectedDevices.Name&CRLF&"Mac Adr("&connectedDevices.Mac)
-			serialScale.Connect(connectedDevices.Mac)
-		End If
-		
-	End If
-End Sub
-#End Region
-
-#Region Serial_Event
-Sub SERIALSCALE_Connected (Success As Boolean)
-	ProgressDialogHide
-	
-	If Success Then
-		ToastMessageShow("Connect successfully",True)
-		flagIsScaleConn = True
-		If AST.IsInitialized Then AST.Close
-		AST.Initialize(Me, "AST", serialScale.InputStream, serialScale.OutputStream)
-		' Timer1.Enabled = True
-	Else
-		flagIsScaleConn = False
-		ToastMessageShow("Troubled connecting ...!",True)
-	End If
-End Sub
+'
+'Sub BTA_DiscoveryFinished
+'	ProgressDialogHide
+'	If lstOfFoundDevices.Size = 0 Then
+'		ToastMessageShow("Bluetooth devices not found !!!"&CRLF&"Please try again !",True)
+'	Else
+'		Dim il As List
+'		il.Initialize
+'		For i=0 To lstOfFoundDevices.Size-1
+'			Dim nm As BlueTooth_NameAndMac
+'			nm = lstOfFoundDevices.Get(i)
+'			il.Add(nm.Name)
+'		Next
+'		
+'		InputListAsync(il, "Take from a paired device", 0, False)
+'		Wait For InputList_Result (Index As Int)
+'		If Index <> DialogResponse.CANCEL Then
+'			connectedDevices = lstOfFoundDevices.Get(Index)
+'			ProgressDialogShow("Connect with : "&CRLF&connectedDevices.Name&CRLF&"Mac Adr("&connectedDevices.Mac)
+'			serialScale.Connect(connectedDevices.Mac)
+'		End If
+'		
+'	End If
+'End Sub
 #End Region
 
 #Region AsyncStream_Event
-Sub AST_Error
-	ToastMessageShow("Network Error: " & LastException.Message, True)
-End Sub
 
-Sub AST_Terminated
-	ToastMessageShow("Broken Connection !!!",True)
-End Sub
-
-Sub AST_NewText( Text As String)
-	If lblData.Text = Text Then
-		Return
-	End If
-	lblData.Text = Text
-	If Text.Length = 19 Then
-		' Log("Message received: " & Text)
-		If currValRec <> NumericReading(Text) Then
-			currValRec = NumericReading(Text)
-			LogColor("Weighting Scale Value : " & Round2(currValRec, 3) & " g", Colors.Magenta)
-			lblReading.Text = currValRec & " gram"
-		End If
-	End If
-End Sub
 ' Try parsing and extract numeric value from electronic scale
-Sub NumericReading(i_reading As String) As Double
-	Dim matcher1 As Matcher
-	matcher1 = Regex.Matcher("[\d\s]+\.[\d\s]+", i_reading)
-	Do While matcher1.Find = True
-		Dim tmp As String = matcher1.Match.Trim
-		If IsNumber(tmp) Then
-			Return tmp.As(Double)
-		End If
-	Loop
-	Return 0
-End Sub
+'Sub NumericReading(i_reading As String) As Double
+'	Dim matcher1 As Matcher
+'	matcher1 = Regex.Matcher("[\d\s]+\.[\d\s]+", i_reading)
+'	Do While matcher1.Find = True
+'		Dim tmp As String = matcher1.Match.Trim
+'		If IsNumber(tmp) Then
+'			Return tmp.As(Double)
+'		End If
+'	Loop
+'	Return 0
+'End Sub
 #End Region
 
 ' Event handler 
@@ -321,47 +388,45 @@ End Sub
 
 ' Event handler
 Sub dybtn_click(res As String)
-	If currValRec = -1 Or currValRec = 0 Then
+	If IsPaused(svcSerialScale) Then
 		Return
 	End If
+	
+	If currValue = 0 Or currValue = -1 Then
+		Msgbox2Async("The reading is zero! Please place product on scale.", "Invalid", "OK", "", "", Null, True)
+		Return
+	End If
+	
 	ToastMessageShow(res, False)
 	If modCommon.mapOfProduct.ContainsKey(res) Then
 		Dim obj As clsProduct = modCommon.mapOfProduct.Get(res)
 		Log(obj.ProductInfo)
-		btPrinter.Size(50, 38)
-		btPrinter.GAP(1.5,0)
-		btPrinter.DENSITY2(7)
-		btPrinter.DIRECTION(0)
-		btPrinter.REFERENCE(0,0)
-		'Printer2.HOME
-		'Printer2.BACKUP(320)
-		btPrinter.CLS
-		Dim a As String
-		a="Test" & DateTime.Date(DateTime.Now) & " " &  DateTime.Time(DateTime.Now)
-		btPrinter.TEXT(20, 10, "TSS24.BF2", 0, 1.2, 1.2, obj.Itemname2)
-		btPrinter.TEXT(20, 60, "TSS24.BF2", 0, 0.8, 0.8, obj.Itemname)
-		btPrinter.TEXT(20, 100, "TSS24.BF2", 0, 1, 1, "Per 100g:")
-		btPrinter.TEXT(150, 100, "TSS24.BF2", 0, 1, 1, "HK$" & NumberFormat(obj.ItemPrice, 0, 1))
-		btPrinter.TEXT(20, 140, "TSS24.BF2", 0, 1, 1, "Weight:")
-		btPrinter.TEXT(150, 140, "TSS24.BF2", 0, 1, 1, NumberFormat(currValRec, 0, 1) & " gram")
-		btPrinter.TEXT(20, 170, "TSS24.BF2", 0, 1, 1, "Price:")		
-		btPrinter.TEXT(150, 170, "TSS24.BF2", 0, 1, 1, "HK$" & NumberFormat(obj.calcPriceByWeight(currValRec), 0, 1))
-		btPrinter.BARCODE(20, 210, "128",70,False,0,2,4, obj.getProductBarcode(currValRec))
-		' btPrinter.QRCODE(20, 150,"L",3,"A",0,a)
-		'only print bmp
-		' btPrinter.PUTBMP(100,140,File.DirAssets,"umbellar2.bmp")
-		' btPrinter.BITMAP(200,140,0,LoadBitmap(File.DirAssets,"umbellar.jpg"))
-		btPrinter.PRINT(1,0)
-		btPrinter.EOP
+		
+		Dim objFP As clsFinishedProduct
+		objFP.Initialize
+		objFP.myDeserializeByObject(obj)		
+		objFP.WeightInGram = currValue
+		objFP.Barcode = obj.getProductBarcode(currValue)
+		objFP.SellingPrice = obj.calcPriceByWeight(currValue)
+		objFP.PackingDt = modCommon.NowInUTC
+		ProgressDialogShow2("Posting...", True)
+		sendFinishedProductIntent("postandprint", "", objFP)
+		'Wait For (sendFinishedProductIntent("postandprint", "", objFP)) Complete(mapRes As Map)
+'		ProgressDialogHide
+'		If mapRes.Get("issuccess").As(Boolean) = False Then
+'			Msgbox2Async("Error: " & CRLF & mapRes.Get("errmsg").As(String), "Operation Error", "OK", "", "", Null, True)
+'			Return 
+'		End If
+'		ToastMessageShow("Item: " & objFP.Product.Itemname2 & " is done.", False)
+		
+		
 	End If
 End Sub
 
 ' Function used to ask user to connect the bluetooth device
 Private Sub ConnectBluetoothDevices()
-	Dim pairedDevices As Map
-	pairedDevices = serialScale.GetPairedDevices
-	Dim il As List
-	il.Initialize
+	Dim pairedDevices As Map = mySerial.GetPairedDevices
+	Dim il As List : il.Initialize
 	For i=0 To pairedDevices.Size - 1
 		il.Add(pairedDevices.GetKeyAt(i))
 	Next
@@ -373,9 +438,12 @@ Private Sub ConnectBluetoothDevices()
 		Dim btMac As String = pairedDevices.Get(btOption)
 		Select Case btOption 
 			Case "irxon" ' bluetooth adaptor of scale
-				serialScale.Connect(btMac)
+				' serialScale.Connect(btMac)
+				' btScale.Connect2(btMac)
+				sendScaleIntent(btMac)
 			Case "XP-365B" ' Xprinter
-				btPrinter.Connect2(btMac)
+				'btPrinter.Connect2(btMac)
+				sendFinishedProductIntent("btconnect", btMac, Null)
 			Case Else
 				Return
 		End Select
@@ -393,27 +461,52 @@ Private Sub btPrinter_Error
 	LogColor("btPrinter Error: " & LastException.Message, Colors.Red)
 End Sub
 Private Sub btPrinter_Terminated
-	ToastMessageShow("Connection is terminated.", True)
+	ToastMessageShow("Connection (Printer) is terminated.", True)
 	LogColor("btPrinter Terminated.", Colors.Blue)
 End Sub
 
-Private Sub DisconnectBluetoothDevices()
-	AST.Close
-	serialScale.Disconnect
-	btPrinter.DisConnect
-	flagIsScaleConn = False
+Private Sub btScale_Connected(issuccess As Boolean)
+	Log("is btScale connected: " & issuccess)
 End Sub
 
-Sub lstToJsonString(i_lst As List) As String
-	If i_lst.IsInitialized = False Then
-		Return "[]"		
-	End If
-	Dim jGen As JSONGenerator
-	Try
-		jGen.Initialize2(i_lst)
-		Return jGen.ToPrettyString(4)		
-	Catch
-		Log(LastException)
-		Return "[]"
-	End Try
+Private Sub btScale_NewText(mapRes As Map)	
+	If mapRes.IsInitialized = False Then
+		Return
+	End If		
+	currValue = mapRes.Get("value")
+	lblData.Text = mapRes.Get("string")
+	lblReading.Text = mapRes.Get("value") & " gram"	
 End Sub
+
+Private Sub btScale_Error
+	LogColor("btScale Error: " & LastException.Message, Colors.Red)
+End Sub
+
+Private Sub btScale_Terminated
+	ToastMessageShow("Connection (Scale) is terminated.", True)
+	LogColor("btScale Terminated.", Colors.Blue)
+End Sub
+
+Private Sub DisconnectBluetoothDevices()
+	
+	'btPrinter.DisConnect
+	Wait For (sendFinishedProductIntent("btdisconnect", "", Null)) Complete(mapRes As Map)
+	
+	If IsPaused(svcSerialScale) = False Then
+		StopService(svcSerialScale)
+	End If
+End Sub
+
+'Sub lstToJsonString(i_lst As List) As String
+'	If i_lst.IsInitialized = False Then
+'		Return "[]"		
+'	End If
+'	Dim jGen As JSONGenerator
+'	Try
+'		jGen.Initialize2(i_lst)
+'		Return jGen.ToPrettyString(4)		
+'	Catch
+'		Log(LastException)
+'		Return "[]"
+'	End Try
+'End Sub

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	package="b4a.example"
+	package="hk.frozenfood.product"
 	android:versionCode="1"
 	android:versionName=""
 	android:installLocation="internalOnly">
@@ -40,6 +40,30 @@
 		</service>
 		<receiver
 			android:name=".starter$starter_BR"
+			android:exported="true">
+		</receiver>
+		<service
+			android:name=".svcback4appproduct"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcback4appproduct$svcback4appproduct_BR"
+			android:exported="true">
+		</receiver>
+		<service
+			android:name=".svcback4appfinishedproduct"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcback4appfinishedproduct$svcback4appfinishedproduct_BR"
+			android:exported="true">
+		</receiver>
+		<service
+			android:name=".svcserialscale"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcserialscale$svcserialscale_BR"
 			android:exported="true">
 		</receiver>
 		<service

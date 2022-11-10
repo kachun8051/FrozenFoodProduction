@@ -1,4 +1,4 @@
-﻿Build1=Default,b4a.example
+﻿Build1=Default,hk.frozenfood.product
 File1=drawermenuitems.bal
 File2=FrozenFood.png
 File3=hamburger.png
@@ -29,20 +29,24 @@ Library8=xui views
 Library9=byteconverter
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
 Module1=|relative|..\AsyncStreamsText
-Module10=|relative|..\DrawerManager
-Module11=|relative|..\modCommon
-Module12=Starter
+Module10=|relative|..\cvDynamicButton
+Module11=|relative|..\DrawerManager
+Module12=|relative|..\modCommon
+Module13=Starter
+Module14=|relative|..\svcBack4AppFinishedProduct
+Module15=|relative|..\svcBack4AppProduct
+Module16=|relative|..\svcSerialScale
 Module2=|relative|..\B4XItemPage
 Module3=|relative|..\B4XMainPage
 Module4=|relative|..\B4XProductionPage
 Module5=|relative|..\B4XRecordPage
 Module6=|relative|..\clsConfig
-Module7=|relative|..\clsProduct
-Module8=|relative|..\clsTSPLPrinter
-Module9=|relative|..\cvDynamicButton
+Module7=|relative|..\clsFinishedProduct
+Module8=|relative|..\clsProduct
+Module9=|relative|..\clsTSPLPrinter
 NumberOfFiles=9
 NumberOfLibraries=9
-NumberOfModules=12
+NumberOfModules=16
 Version=11.8
 @EndOfDesignText@
 #Region  Project Attributes 
