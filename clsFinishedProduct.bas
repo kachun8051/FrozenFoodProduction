@@ -97,6 +97,26 @@ Public Sub myDeserialize(jstr As String) As Boolean
 		Return True
 	End Try
 End Sub
+' this function is used "eat" the map from back4app and "digest" its key-pair value 
+Public Sub myDeserializeByMap(i_map As Map) As Boolean
+	If i_map.IsInitialized = False Then
+		Return False
+	End If
+	m_objProduct.Initialize
+	If i_map.ContainsKey("objectId") Then m_objectid = i_map.Get("objectId")
+	If i_map.ContainsKey("itemnum") Then m_objProduct.Itemnum = i_map.Get("itemnum")
+	If i_map.ContainsKey("itemname") Then m_objProduct.Itemname = i_map.Get("itemname")
+	If i_map.ContainsKey("itemname2") Then m_objProduct.Itemname2 = i_map.Get("itemname2")
+	If i_map.ContainsKey("itemuom") Then m_objProduct.Itemuom = i_map.Get("itemuom")
+	If i_map.ContainsKey("itemuom2") Then m_objProduct.Itemuom2 = i_map.Get("itemuom2")
+	If i_map.ContainsKey("itemstandardweight") Then m_objProduct.Itemstandardweight = i_map.Get("itemstandardweight")
+	If i_map.ContainsKey("itemprice") Then m_objProduct.ItemPrice = i_map.Get("itemprice")
+	If i_map.ContainsKey("weightingram") Then m_weightInGram = i_map.Get("weightingram")
+	If i_map.ContainsKey("sellingprice") Then m_sellingprice = i_map.Get("sellingprice")
+	If i_map.ContainsKey("barcode") Then m_barcode = i_map.Get("barcode")
+	If i_map.ContainsKey("packingdt") Then m_packingDt = i_map.Get("packingdt")
+	Return True
+End Sub
 
 ' this function is used to encapsulate this object for posting the record to cloud database
 Public Sub getJsonStringForPost() As String
@@ -121,10 +141,10 @@ Private Sub mySerializeAsMap() As Map
 	map1.Put("itemname", m_objProduct.itemname)
 	map1.Put("itemname2", m_objProduct.itemname2)
 	map1.Put("itemuom", m_objProduct.itemuom)
-	map1.Put("itemnum2", m_objProduct.itemuom2)
+	map1.Put("itemuom2", m_objProduct.itemuom2)
 	map1.Put("itemstandardweight", m_objProduct.itemstandardweight)
 	map1.Put("itemprice", m_objProduct.itemprice)
-	map1.Put("weightingram", m_weightInGram)	
+	map1.Put("weightingram", m_weightInGram)		
 	map1.Put("sellingprice", m_sellingprice)
 	map1.Put("barcode", m_barcode)
 	map1.Put("packingdt", m_packingDt)
@@ -142,8 +162,46 @@ Public Sub myDeserializeByObject(obj As clsProduct) As Boolean
 	m_objProduct.Itemuom = obj.Itemuom
 	m_objProduct.Itemuom2 = obj.Itemuom2
 	m_objProduct.Itemstandardweight = obj.Itemstandardweight
-	m_objProduct.ItemPrice = obj.ItemPrice	
-	Return True	
+	m_objProduct.ItemPrice = obj.ItemPrice
+	Return True
+End Sub
+
+' Change map of finished product from production record to string
+Public Sub mapToString(i_map As Map) As String
+	
+	If i_map.IsInitialized = False Then
+		Return ""
+	End If
+'	{
+'		"objectId": "n0yBVvsvNx",
+'		"itemnum": "120016",
+'		"itemname": "Japan Wagyu Dice",
+'		"itemname2": "日本和牛粒",
+'		"itemuom": "100g",
+'		"itemuom2": 100,
+'		"itemstandardweight": 200,
+'		"itemprice": 38,
+'		"weightingram": 102.2,
+'		"sellingprice": 38.8,
+'		"barcode": "012001600388010224",
+'		"packingdt": "21/11/2022 07:55:24 GMT+08:00",
+'		"createdAt": "2022-11-20T23:55:24.506Z",
+'		"updatedAt": "2022-11-20T23:55:24.506Z"
+'	}
+	Dim objSb As StringBuilder
+	objSb.Initialize
+	If i_map.ContainsKey("objectId") Then objSb.Append("Object Id: ").Append(i_map.Get("objectId")).Append(CRLF)
+	If i_map.ContainsKey("itemnum") Then objSb.Append("Item No: ").Append(i_map.Get("itemnum")).Append(CRLF)
+	If i_map.ContainsKey("itemname") Then objSb.Append("Item Name: ").Append(i_map.Get("itemname")).Append(CRLF)
+	If i_map.ContainsKey("itemname2") Then objSb.Append("Item Name2: ").Append(i_map.Get("itemname2")).Append(CRLF)
+	If i_map.ContainsKey("itemuom") Then objSb.Append("Item Unit: ").Append(i_map.Get("itemuom")).Append(CRLF)
+	If i_map.ContainsKey("itemstandardweight") Then objSb.Append("Std Weight: ").Append(i_map.Get("itemstandardweight")).Append("g").Append(CRLF)
+	If i_map.ContainsKey("itemprice") Then objSb.Append("Price per ").Append("itemnum").Append(": $").Append(i_map.Get("itemprice")).Append(CRLF)
+	If i_map.ContainsKey("weightingram") Then objSb.Append("Weight: ").Append(i_map.Get("weightingram")).Append("g").Append(CRLF)
+	If i_map.ContainsKey("sellingprice") Then objSb.Append("Selling Price: $").Append(i_map.Get("sellingprice")).Append(CRLF)
+	If i_map.ContainsKey("barcode") Then objSb.Append("Barcode: ").Append(i_map.Get("barcode")).Append(CRLF)
+	If i_map.ContainsKey("packingdt") Then objSb.Append("Packing Date: ").Append(i_map.Get("packingdt").As(String).SubString2(0, 19))
+	Return objSb.ToString
 End Sub
 
 #Region Getter

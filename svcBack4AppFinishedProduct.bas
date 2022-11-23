@@ -20,11 +20,14 @@ Sub Process_Globals
 	' bluetooth printer would receive print label command in this service 
 	Private btPrinter As clsTSPLPrinter
 	Private MacAddr As String
+	Private Job As HttpJob
+	Private lstOfProduction As List
 End Sub
 
 Sub Service_Create
 	objConfig.Initialize
 	btPrinter.Initialize(Me, "btPrinter")
+	lstOfProduction.Initialize
 End Sub
 
 Sub Service_Start (StartingIntent As Intent)
@@ -66,6 +69,33 @@ Sub Service_Start (StartingIntent As Intent)
 				btPrinter.DisConnect
 			End If
 			CallSubDelayed2(mySender, "getBtDisconnectedResponse", btPrinter.IsBluetoothOn)
+		Case "query"
+			' myParam here is date in format yyyyMMdd
+			Dim url As String = getUrlFromOneDate(param_1)
+			sendBack4AppReq(url)
+		Case "delete"
+			' myParam here is the objectId
+			Dim url_2 As String = "https://parseapi.back4app.com/classes/Production/" & param_1
+			sendBack4AppDelete(url_2)	
+		Case "printonly"
+			' param_1 for postandprint is json string of object clsFinishedProduct
+			If param_1 = "" Then
+				Return
+			End If
+			If btPrinter.IsBluetoothOn = False Then
+				CallSubDelayed2(mySender, "getFinishedProductPrintedResponse", _
+					CreateMap("issuccess": False, "errmsg": "btprinter is NOT connected!"))
+				Return
+			End If
+			Dim objFP As clsFinishedProduct : objFP.Initialize
+			objFP.myDeserialize(param_1)			
+			Dim isPrinted As Boolean = PrintLabel(objFP.ObjectId, objFP.Product, objFP.WeightInGram)
+			If isPrinted = False Then
+				CallSubDelayed2(mySender, "getFinishedProductPrintedResponse", _ 
+					CreateMap("issuccess": False, "errmsg": "Printer Error!" & CRLF & LastException.Message))
+				Return
+			End If
+			CallSubDelayed2(mySender, "getFinishedProductPrintedResponse", CreateMap("issuccess": True))
 		Case "postandprint"
 			' param_1 for postandprint is json string of object clsFinishedProduct
 			If param_1 = "" Then
@@ -94,6 +124,7 @@ Sub Service_Start (StartingIntent As Intent)
 			End If
 			CallSubDelayed2(mySender, "getFinishedProductPostedResponse", _ 
 				CreateMap("issuccess": True, "objectid": objid, "itemnum": objFP.Itemnum, "itemname": objFP.Product.Itemname))
+		
 	End Select
 	
 End Sub
@@ -171,6 +202,114 @@ Sub PrintLabel(objid As String, obj As clsProduct, weight As Double) As Boolean
 		Log(LastException)
 		Return False
 	End Try
+	
+End Sub
+
+Private Sub sendBack4AppReq(url As String)
+	Job.initialize("query", Me)
+	Job.Download(url)
+	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
+	Job.GetRequest.SetHeader("X-Parse-REST-API-Key", objConfig.apikey)
+	Job.GetRequest.SetHeader("X-Parse-Master-Key", objConfig.masterkey)
+End Sub
+
+Private Sub sendBack4AppDelete(url As String)
+	Job.Initialize("delete", Me)
+	Job.Delete(url)
+	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
+	Job.GetRequest.SetHeader("X-Parse-REST-API-Key", objConfig.apikey)
+End Sub
+
+Private Sub JobDone(j As HttpJob)
+	If j.JobName = "delete" Then
+		jobdoneForDelete(j)
+	End If
+	If j.JobName = "query" Then
+		jobdoneForQuery(j)
+	End If
+	j.Release
+End Sub
+
+Private Sub jobdoneForDelete(j As HttpJob)
+	If j.Success Then
+		Dim jResponse As String = j.GetString
+		Log(jResponse)
+		Try
+			CallSubDelayed2(mySender, "getDeletedResponse", True)
+		Catch
+			Log(LastException)
+			CallSubDelayed2(mySender, "getDeletedResponse", False)
+		End Try
+	Else
+		CallSubDelayed2(mySender, "getDeletedResponse", False)
+	End If
+End Sub
+
+Private Sub jobdoneForQuery(j As HttpJob)
+	If j.Success Then
+		Dim jResponse As String = j.GetString
+		Log(jResponse)
+		Try
+			Dim jparser As JSONParser
+			jparser.Initialize(jResponse)
+			Dim map1 As Map = jparser.Nextobject
+			lstOfProduction = map1.Get("results")
+			CallSubDelayed2(mySender, "getQueryResponse", CreateMap("issuccess": True, "datalist": lstOfProduction))
+		Catch
+			Log(LastException)
+			CallSubDelayed2(mySender, "getQueryResponse", CreateMap("issuccess": False, "errmsg": LastException.Message))
+		End Try
+	Else
+		CallSubDelayed2(mySender, "getQueryResponse", CreateMap("issuccess": False, "errmsg": "Network access error"))
+	End If
+End Sub
+
+' datecode must be in format yyyyMMdd
+Private Sub getUrlFromOneDate(datecode As String) As String
+	
+	If IsNumber(datecode) = False Or datecode.Length <> 8 Then
+		Return ""
+	End If
+	' dd/MM/yyyy 00:00:00+8:00
+	Dim dt1 As String = getThisDay(datecode)
+	' 10/10/2022 01:41:00+08:00
+	Dim dt2 As String = getAddOneDay(datecode)
+	Dim url As String = "https://parseapi.back4app.com/classes/Production?" & _
+		$"where={"packingdt":{"${Chr(36)}gt":"${dt1}","${Chr(36)}lt":"${dt2}"}}"$ & _
+		$"&order=itemnum"$
+	Log(url)
+	Return url
+End Sub
+
+Private Sub getThisDay(datecode As String) As String
+	If IsNumber(datecode) = False Or datecode.Length <> 8 Then
+		Return ""
+	End If
+	Return datecode.SubString(6) & "/" & datecode.SubString2(4, 6) & "/" & datecode.SubString2(0, 4) & " 00:00:00+8:00"
+End Sub
+
+' datecode must be in format yyyyMMdd
+Private Sub getAddOneDay(datecode As String) As String
+	If IsNumber(datecode) = False Or datecode.Length <> 8 Then
+		Return ""
+	End If
+	Dim OneDayAdded As String = ""
+	' original date format
+	Dim df As String = DateTime.DateFormat
+	DateTime.DateFormat = "yyyyMMdd"
+	Try
+		Dim dt1 As Long = DateTime.DateParse(datecode)
+		Dim dt2 As Long = DateTime.Add(dt1, 0, 0, 1)
+		DateTime.DateFormat = "dd/MM/yyyy"
+		Dim date1 As String = DateTime.Date(dt2)
+		OneDayAdded = date1 & " 00:00:00+8:00"
+	Catch
+		Log(LastException)
+		OneDayAdded = ""
+	End Try
+	' Restore the original date format
+	DateTime.DateFormat = df
+	Return OneDayAdded
 	
 End Sub
 

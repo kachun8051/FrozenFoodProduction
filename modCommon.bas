@@ -20,7 +20,7 @@ Public Sub NowInUTC() As String
 	Dim timezone As Int = DateTime.TimeZoneOffset
 	Dim df As String = DateTime.DateFormat
 	DateTime.SetTimeZone(8) 'only need to set it once so the process is now based on UTC timezone.
-	DateTime.DateFormat = "MM/dd/yyyy HH:mm:ss z"
+	DateTime.DateFormat = "dd/MM/yyyy HH:mm:ss z"
 	Dim utc As String = DateTime.Date(DateTime.Now)
 	' Dim ticks As Long = DateTime.DateParse("03/07/2015 11:11:44" & " EST")
 	Log(utc)

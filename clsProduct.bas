@@ -148,8 +148,9 @@ Public Sub myDeserialize(i_map As Map) As Boolean
 End Sub
 
 Public Sub calcPriceByWeight(actWeight As Double) As Double
-	Dim sellingprice As Double = (actWeight * m_itemprice) / 100
-	Return sellingprice
+	Dim sellingprice As Double = (actWeight * m_itemprice) / 100	
+	' sellingprice is rounded as 1 d.p. as same as price in barcode
+	Return Round2(sellingprice, 1)
 End Sub
 
 Public Sub getProductBarcode(weight As Double) As String

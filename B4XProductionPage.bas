@@ -54,7 +54,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	
 	'load the layout to Root
 	drManager.Initialize(Me, "Drawer", Root, 200dip)
-	drManager.myDrawer.CenterPanel.LoadLayout("ProductionPage")
+	drManager.myDrawer.CenterPanel.LoadLayout("ProductionPage.bal")
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
 	' Event handler is B4XPage_MenuClick
 	B4XPages.GetManager.LogEvents = True
