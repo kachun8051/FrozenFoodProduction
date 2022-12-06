@@ -57,10 +57,10 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	drManager.myDrawer.CenterPanel.LoadLayout("ProductionPage.bal")
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
 	' Event handler is B4XPage_MenuClick
-	B4XPages.GetManager.LogEvents = True
+	B4XPages.GetManager.LogEvents = True	
 	B4XPages.AddMenuItem(Me, "Connect Bluetooth")
 	B4XPages.AddMenuItem(Me, "Disconnect Bluetooth")
-		
+	B4XPages.AddMenuItem(Me, "refresh")
 	createMenu
 	B4XPages.SetTitle(Me, "Production")
 	dybtn.Initialize(Me, "dybtn_click")
@@ -99,6 +99,7 @@ End Sub
 
 Private Sub B4XPage_Disappear
 	drManager.B4XPageDisappear
+	dybtn.resetNumOfRow
 '	If IsPaused( svcSerialScale) = False Then
 '		StopService(svcSerialScale)
 '	End If
@@ -119,6 +120,10 @@ Private Sub B4XPage_MenuClick(Tag As String)
 			ConnectBluetoothDevices
 		Case "Disconnect Bluetooth"
 			DisconnectBluetoothDevices
+		Case "refresh"
+			' reset the num of row to get new data
+			dybtn.resetNumOfRow			
+			sendProductIntent("query")
 	End Select
 End Sub
 
@@ -408,7 +413,8 @@ Sub dybtn_click(res As String)
 		objFP.WeightInGram = currValue
 		objFP.Barcode = obj.getProductBarcode(currValue)
 		objFP.SellingPrice = obj.calcPriceByWeight(currValue)
-		objFP.PackingDt = modCommon.NowInUTC
+		objFP.PackingDt = modCommon.getNowForShown
+		objFP.PackedAt = modCommon.getNowWithTimeZone
 		ProgressDialogShow2("Posting...", True)
 		sendFinishedProductIntent("postandprint", "", objFP)
 		'Wait For (sendFinishedProductIntent("postandprint", "", objFP)) Complete(mapRes As Map)

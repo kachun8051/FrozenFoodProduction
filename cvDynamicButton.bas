@@ -46,14 +46,13 @@ Public Sub getNumOfCol() As Int
 	Return m_NumOfCol
 End Sub
 
+Public Sub resetNumOfRow()
+	m_NumOfRow = -1
+End Sub
+
 ' Note: Number of Row is dependent of number of product fetched from cloud
 Public Sub getNumOfRow() As Int
-	If m_NumOfRow = -1 Then
-		'If modCommon.listOfProduct.IsInitialized = False Then
-		'	Return 100%y-70dip
-		'Else
-		'	m_NumOfRow = Ceil(modCommon.listOfProduct.Size / m_NumOfCol)			
-		'End If	
+	If m_NumOfRow = -1 Then		
 		If modCommon.mapOfProduct.IsInitialized = False Then
 			Return 100%y - 70dip
 		Else

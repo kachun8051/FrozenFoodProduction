@@ -265,27 +265,49 @@ Private Sub jobdoneForQuery(j As HttpJob)
 End Sub
 
 ' datecode must be in format yyyyMMdd
-Private Sub getUrlFromOneDate(datecode As String) As String
-	
+Private Sub getUrlFromOneDate(datecode As String) As String	
 	If IsNumber(datecode) = False Or datecode.Length <> 8 Then
 		Return ""
 	End If
-	' dd/MM/yyyy 00:00:00+8:00
-	Dim dt1 As String = getThisDay(datecode)
-	' 10/10/2022 01:41:00+08:00
-	Dim dt2 As String = getAddOneDay(datecode)
+	' Reference: https://docs.parseplatform.org/rest/guide/
+	' negative means desc
 	Dim url As String = "https://parseapi.back4app.com/classes/Production?" & _
-		$"where={"packingdt":{"${Chr(36)}gt":"${dt1}","${Chr(36)}lt":"${dt2}"}}"$ & _
-		$"&order=itemnum"$
-	Log(url)
+		"where=" & getDateParam(datecode) & "&order=-packedAt"
+	LogColor("getUrlFromOneDate: " & url, Colors.Blue)
 	Return url
+End Sub
+
+Private Sub getDateParam(datecode As String) As String
+	' yyyy-MM-ddT00:00:00+08:00
+	Dim dt1 As String = getThisDay(datecode)
+	Dim dt2 As String = getAddOneDay(datecode)
+	Dim map As Map : map.Initialize	
+	map.Put("$gte", CreateMap("__type": "Date", "iso": dt1))
+	map.Put("$lt", CreateMap("__type": "Date", "iso": dt2))
+	Dim jGen As JSONGenerator
+	Try
+		jGen.Initialize(CreateMap("packedAt": map))
+		Return jGen.ToString
+	Catch
+		Log(LastException)
+		Return "{}"
+	End Try
 End Sub
 
 Private Sub getThisDay(datecode As String) As String
 	If IsNumber(datecode) = False Or datecode.Length <> 8 Then
 		Return ""
 	End If
-	Return datecode.SubString(6) & "/" & datecode.SubString2(4, 6) & "/" & datecode.SubString2(0, 4) & " 00:00:00+8:00"
+	Dim df As String = DateTime.DateFormat
+	DateTime.DateFormat = "yyyyMMdd"
+	Dim dt As Long = DateTime.DateParse(datecode)
+	dt = dt - DateTime.TicksPerHour * modCommon.getTimeZone
+	DateTime.DateFormat = "yyyy-MM-dd HH:mm:ss"
+	Dim dt2 As String = DateTime.Date(dt).As(String).Replace(" ", "T") & "Z"
+	Log(dt2)
+	' Restore the original date format
+	DateTime.DateFormat = df	
+	Return dt2
 End Sub
 
 ' datecode must be in format yyyyMMdd
@@ -300,30 +322,15 @@ Private Sub getAddOneDay(datecode As String) As String
 	Try
 		Dim dt1 As Long = DateTime.DateParse(datecode)
 		Dim dt2 As Long = DateTime.Add(dt1, 0, 0, 1)
-		DateTime.DateFormat = "dd/MM/yyyy"
-		Dim date1 As String = DateTime.Date(dt2)
-		OneDayAdded = date1 & " 00:00:00+8:00"
+		dt2 = dt2 - DateTime.TicksPerHour * modCommon.getTimeZone
+		DateTime.DateFormat = "yyyy-MM-dd HH:mm:ss"
+		OneDayAdded = DateTime.Date(dt2).Replace(" ", "T") & "Z"
+		Log(OneDayAdded)
 	Catch
 		Log(LastException)
 		OneDayAdded = ""
 	End Try
 	' Restore the original date format
 	DateTime.DateFormat = df
-	Return OneDayAdded
-	
+	Return OneDayAdded	
 End Sub
-
-'Private Sub jstrToMap(jstr As String) As Map
-'	If jstr = "" Then
-'		Return CreateMap()
-'	End If
-'	Dim jParser As JSONParser
-'	Try
-'		jParser.Initialize(jstr)
-'		Dim m As Map = jParser.NextObject
-'		Return m
-'	Catch
-'		Log(LastException)
-'		Return CreateMap()
-'	End Try
-'End Sub

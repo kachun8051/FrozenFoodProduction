@@ -10,18 +10,22 @@ Sub Class_Globals
 	Private m_weightInGram As Double
 	Private m_sellingprice As Double
 	Private m_barcode As String
+	' m_packingDt is String(in back4app) for display
 	Private m_packingDt As String
+	' m_packedAt is Date(in back4app) for filtering.
+	' m_packedAt would be 8 hours earlier than m_packingDt due to timezone	
+	Private m_packedAt As String ' yyyy-MM-ddTHH:mm:ssZ
 End Sub
 
 'Initializes the object. You can add parameters to this method if needed.
 Public Sub Initialize
 	
 End Sub
-' this function serialize the object into json string
+' this function serialize the object
 Public Sub mySerialize() As String
 	If m_objProduct.IsInitialized = False Then
 		Return "{}"
-	End If
+	End If	
 	Dim m As Map : m.initialize
 	m.Put("objectid", m_objectid)
 	m.Put("itemnum", m_objProduct.itemnum)
@@ -35,6 +39,7 @@ Public Sub mySerialize() As String
 	m.Put("sellingprice", m_sellingprice)
 	m.Put("barcode", m_barcode)
 	m.Put("packingdt", m_packingDt)
+	m.Put("packedAt", m_packedAt)
 	Dim jGen As JSONGenerator
 	Try
 		jGen.Initialize(m)
@@ -91,6 +96,9 @@ Public Sub myDeserialize(jstr As String) As Boolean
 		If m.ContainsKey("packingdt") Then
 			m_packingDt = m.Get("packingdt")
 		End If
+		If m.ContainsKey("packedAt") Then
+			m_packedAt = m.Get("packedAt")
+		End If
 		Return True
 	Catch
 		Log(LastException)
@@ -115,6 +123,7 @@ Public Sub myDeserializeByMap(i_map As Map) As Boolean
 	If i_map.ContainsKey("sellingprice") Then m_sellingprice = i_map.Get("sellingprice")
 	If i_map.ContainsKey("barcode") Then m_barcode = i_map.Get("barcode")
 	If i_map.ContainsKey("packingdt") Then m_packingDt = i_map.Get("packingdt")
+	If i_map.ContainsKey("packedAt") Then m_packedAt = i_map.Get("packedAt")
 	Return True
 End Sub
 
@@ -136,6 +145,7 @@ Private Sub mySerializeAsMap() As Map
 		' return empty map
 		Return CreateMap()
 	End If
+	Dim innermap As Map = CreateMap("__type": "Date", "iso": m_packedAt)
 	Dim map1 As Map : map1.Initialize
 	map1.Put("itemnum", m_objProduct.itemnum)
 	map1.Put("itemname", m_objProduct.itemname)
@@ -148,6 +158,7 @@ Private Sub mySerializeAsMap() As Map
 	map1.Put("sellingprice", m_sellingprice)
 	map1.Put("barcode", m_barcode)
 	map1.Put("packingdt", m_packingDt)
+	map1.Put("packedAt", innermap)
 	Return map1
 End Sub
 ' this function 'eat' Product object and assign its attributes
@@ -185,6 +196,7 @@ Public Sub mapToString(i_map As Map) As String
 '		"sellingprice": 38.8,
 '		"barcode": "012001600388010224",
 '		"packingdt": "21/11/2022 07:55:24 GMT+08:00",
+'		"packedAt": "2022-11-20T23:55:24.000Z", 
 '		"createdAt": "2022-11-20T23:55:24.506Z",
 '		"updatedAt": "2022-11-20T23:55:24.506Z"
 '	}
@@ -257,6 +269,11 @@ End Sub
 Public Sub getPackingDt() As String
 	Return m_packingDt
 End Sub
+
+Public Sub getPackedAt() As String
+	Return m_packedAt
+End Sub
+
 #End Region
 Public Sub setItemnum(value As String)
 	If m_objProduct.IsInitialized = False Then
@@ -300,4 +317,8 @@ End Sub
 
 Public Sub setPackingDt(value As String)
 	m_packingDt = value
+End Sub
+
+Public Sub setPackedAt(value As String)
+	m_packedAt = value
 End Sub
