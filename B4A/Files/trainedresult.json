@@ -1,0 +1,32 @@
+{
+	"1": {
+		"name": "Nothing"
+	},
+	"2": {
+		"name": "Pork Slice"
+	},
+	"3": {
+		"name": "Beef Slice"
+	},
+	"4": {
+		"name": "Tenderloin"
+	},
+	"5": {
+		"name": "Squid"
+	},
+	"6": {
+		"name": "Green Shrimp"
+	},
+	"7": {
+		"name": "Safflower Crab"
+	},
+	"8": {
+		"name": "Bream Fish"
+	},
+	"9": {
+		"name": "Lobster"
+	},
+	"10": {
+		"name": "Portunus"
+	}
+}

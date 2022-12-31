@@ -15,9 +15,14 @@ End Sub
 
 'Initializes the object. You can add parameters to this method if needed.
 Public Sub Initialize
+	' Account of kcwong8051@gmail.com
 	m_appid = "5vUD5SzypdFDZfa7Sxjya1yLliHMAJ52ML3sqBf6"
 	m_apikey = "sgyDDR9YYlvTfkZv1datnUu75nhnnjqejm2yMFNL"
 	m_masterkey = "xFPWpeqIXuGXBek7CljLVsRH72TjvQen5Rd9XxiF"
+	' Account of zebramc36002@gmail.com
+'	m_appid = "6DILeMWIdzEA4jzdj9am5UV5czdUD5rmEIQzbh3A"
+'	m_apikey = "AwqvAouTa7RNoktwCTdNc4Wc7DQDF9v41BpfN0v9"
+'	m_masterkey = "lxU1bFBupo35PVUUkfAjos44hFUqNhFyHTEgQCCZ"
 End Sub
 
 Public Sub getAppId() As String

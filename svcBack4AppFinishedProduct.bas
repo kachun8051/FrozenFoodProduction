@@ -63,12 +63,12 @@ Sub Service_Start (StartingIntent As Intent)
 			If btPrinter.IsInitialized Then
 				btPrinter.Connect2(param_1)
 			End If			
-			CallSubDelayed2(mySender, "getBtConnectedResponse", btPrinter.IsBluetoothOn)
+			CallSubDelayed2(mySender, "btPrinter_Connected", btPrinter.IsBluetoothOn)
 		Case "btdisconnect"
 			If btPrinter.IsInitialized Then
 				btPrinter.DisConnect
 			End If
-			CallSubDelayed2(mySender, "getBtDisconnectedResponse", btPrinter.IsBluetoothOn)
+			CallSubDelayed2(mySender, "btPrinter_Disconnected", btPrinter.IsBluetoothOn)
 		Case "query"
 			' myParam here is date in format yyyyMMdd
 			Dim url As String = getUrlFromOneDate(param_1)

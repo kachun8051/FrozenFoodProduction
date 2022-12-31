@@ -6,11 +6,18 @@
 	android:versionName=""
 	android:installLocation="internalOnly">
 	
-	<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>
+	<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>
 	<supports-screens android:largeScreens="true" 
 	    android:normalScreens="true" 
 	    android:smallScreens="true" 
 	    android:anyDensity="true"/>
+	<uses-permission
+	  android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+	  android:maxSdkVersion="29" />
+	<uses-permission
+	  android:name="android.permission.READ_EXTERNAL_STORAGE"
+	  android:maxSdkVersion="29" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	<uses-permission android:name="android.permission.BLUETOOTH"/>
 	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
 	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -43,6 +50,14 @@
 			android:exported="true">
 		</receiver>
 		<service
+			android:name=".svcback4appfinishedproduct"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcback4appfinishedproduct$svcback4appfinishedproduct_BR"
+			android:exported="true">
+		</receiver>
+		<service
 			android:name=".svcback4appproduct"
 			android:exported="true">
 		</service>
@@ -51,11 +66,11 @@
 			android:exported="true">
 		</receiver>
 		<service
-			android:name=".svcback4appfinishedproduct"
+			android:name=".svcserialhuskylens"
 			android:exported="true">
 		</service>
 		<receiver
-			android:name=".svcback4appfinishedproduct$svcback4appfinishedproduct_BR"
+			android:name=".svcserialhuskylens$svcserialhuskylens_BR"
 			android:exported="true">
 		</receiver>
 		<service

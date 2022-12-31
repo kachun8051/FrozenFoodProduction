@@ -16,30 +16,24 @@ Sub Class_Globals
 	Private objConfig As clsConfig
 	#End Region	
 	Private lstProduct As List
+	' Private rp As RuntimePermissions
 	Private lblData As Label
 	Private lblReading As Label
 	Private currValue As Double
-'	Private currValRec As Double
 	
-	Private ScrollView1 As ScrollView
-	Private dybtn As cvDynamicButton
-	' BlueTooth Label Printer object
-'	Private btPrinter As clsTSPLPrinter
-	' BlueTooth Weighting Scale object
-	' Private btScale As clsSerialScale
-	' Serial for weighting scale
+	' Private ScrollView1 As ScrollView
+	' Private dybtn As cvDynamicButton
 	Private BTA As BluetoothAdmin
 	Private mySerial As Serial
 	Private lstOfFoundDevices As List
 	Type BlueTooth_NameAndMac (Name As String, Mac As String)
+	Private cvDynamicButton1 As cvDynamicButton
 End Sub
 
 'You can add more parameters here.
 Public Sub Initialize As Object
 	objConfig.Initialize
-	lstProduct.Initialize
-	' btPrinter.Initialize(Me, "btPrinter")
-	' btScale.Initialize(Me, "btScale")
+	lstProduct.Initialize	
 	mySerial.Initialize("mySerial")
 	currValue = -1	
 	Return Me
@@ -63,19 +57,15 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	B4XPages.AddMenuItem(Me, "refresh")
 	createMenu
 	B4XPages.SetTitle(Me, "Production")
-	dybtn.Initialize(Me, "dybtn_click")
+	'dybtn.Initialize(Me, "dybtn_click")
 	' Please note that dimension of ScrollView is different from
 	' dimension of panel of ScrollView
 	Dim svHeight As Double = 100%y-70dip 'ScrollView1.Height
 	Dim svWidth As Double = 100%x-20dip 'ScrollView1.Width
 	LogColor("ScrollView's height: " & svHeight, Colors.Blue)
 	LogColor("ScrollView's width: " & svWidth, Colors.Blue)
-	dybtn.setPanelHeightWidth(svHeight, svWidth)
-	' ScrollView1.Panel.Width = svWidth
-	If lstProduct.Size = 0 Then
-		' sendBack4AppRequest
-		sendProductIntent("query")		
-	End If
+	cvDynamicButton1.setPanelHeightWidth(svHeight, svWidth)
+	' ScrollView1.Panel.Width = svWidth	
 End Sub
 
 'You can see the list of page related events in the B4XPagesManager object. The event name is B4XPage.
@@ -99,7 +89,7 @@ End Sub
 
 Private Sub B4XPage_Disappear
 	drManager.B4XPageDisappear
-	dybtn.resetNumOfRow
+	cvDynamicButton1.resetNumOfRow
 '	If IsPaused( svcSerialScale) = False Then
 '		StopService(svcSerialScale)
 '	End If
@@ -122,7 +112,7 @@ Private Sub B4XPage_MenuClick(Tag As String)
 			DisconnectBluetoothDevices
 		Case "refresh"
 			' reset the num of row to get new data
-			dybtn.resetNumOfRow			
+			cvDynamicButton1.resetNumOfRow
 			sendProductIntent("query")
 	End Select
 End Sub
@@ -151,7 +141,20 @@ Private Sub createMenu
 	Next
 End Sub
 
-Sub sendScaleIntent(mac As String)
+Sub sendHuskylensIntent(macaddr As String)
+	If IsPaused(svcSerialHuskylens) = False Then
+		StopService(svcSerialHuskylens)
+	End If
+	Dim inte As Intent
+	inte.Initialize("", "")
+	inte.SetComponent(Application.PackageName & "/.svcserialhuskylens")
+	' pidProduction is page id of B4XProductionPage
+	inte.PutExtra("senderid", "pidProduction")
+	inte.PutExtra("mac", macaddr)
+	StartService(inte)
+End Sub
+
+Sub sendScaleIntent(macaddr As String)
 	If IsPaused(svcSerialScale) = False Then
 		StopService(svcSerialScale)
 	End If
@@ -160,7 +163,7 @@ Sub sendScaleIntent(mac As String)
 	inte.SetComponent(Application.PackageName & "/.svcserialscale")
 	' pidProduction is page id of B4XProductionPage
 	inte.PutExtra("senderid", "pidProduction")
-	inte.PutExtra("mac", mac)
+	inte.PutExtra("mac", macaddr)
 	StartService(inte)
 End Sub
 
@@ -190,6 +193,15 @@ Sub sendProductIntent(task As String)
 	StartService(inte)
 End Sub
 
+' this event hander - LayoutLoaded would be triggered if
+' custom view has loaded the layout file
+Private Sub cvDynamicButton1_LayoutLoaded
+	If lstProduct.Size = 0 Then
+		' sendBack4AppRequest
+		sendProductIntent("query")
+	End If
+End Sub
+
 Sub getProductResponse(mapRes As Map)
 	StopService(svcBack4AppProduct)
 	Dim isSuccess As Boolean = mapRes.Get("issuccess")
@@ -200,13 +212,7 @@ Sub getProductResponse(mapRes As Map)
 	Dim lstOfProduct As List = mapRes.Get("datalist")
 	Dim isFilled As Boolean = fillTheList(lstOfProduct)
 	If isFilled Then
-		ScrollView1.Panel.RemoveAllViews
-		' Cast from double to int
-		ScrollView1.Panel.Height = dybtn.InnerPanelHeight
-		ScrollView1.Panel.Width = 100%x-20dip
-		' CreateButton would trigger the event - AddButtonHandler
-		' to add button(s) to existing scrollview
-		dybtn.CreateButtons
+		cvDynamicButton1.FillTheData
 	End If
 End Sub
 
@@ -228,77 +234,6 @@ Sub getFinishedProductPostedResponse(mapRes As Map)
 	ToastMessageShow(msg, True)
 End Sub
 
-Sub getBtConnectedResponse(isbtOn As Boolean)
-	Log("Connected: " & isbtOn)	
-End Sub
-
-Sub getBtDisconnectedResponse(isbtOn As Boolean)
-	Log("Disconnected: " & isbtOn)
-End Sub
-
-'Sub sendBack4AppPost(fp As clsFinishedProduct) As ResumableSub
-'	Dim isSuccess As Boolean = False
-'	Dim objid As String = ""
-'	Dim Job As HttpJob
-'	Job.initialize("post", Me)
-'	Job.PostString("https://parseapi.back4app.com/classes/Production", fp.JsonStringForPost)
-'	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
-'	Job.GetRequest.SetHeader("X-Parse-REST-API-Key", objConfig.ApiKey)
-'	Job.GetRequest.SetContentType("application/json")
-'	ProgressDialogShow2("Posting...", True)
-'	Wait For JobDone(j As HttpJob)
-'	ProgressDialogHide
-'	If j.Success Then
-'		Log(j.GetString)
-'		Try
-'			Dim jparser As JSONParser
-'			jparser.Initialize(j.GetString)
-'			Dim map2 As Map = jparser.NextObject
-'			objid = map2.Get("objectId")
-'			Msgbox2Async($"objectId: ${map2.Get("objectId")}${CRLF}createdAt: ${map2.Get("createdAt")}"$, "Response","Done","","",Null, True)
-'			isSuccess = True
-'		Catch
-'			Log(LastException)
-'			isSuccess = False
-'		End Try
-'	End If
-'	j.Release
-'	Return CreateMap("issuccess": isSuccess, "objectid": objid)
-'End Sub
-
-'Sub sendBack4AppRequest()
-'	Dim Job As HttpJob
-'	Job.initialize("request", Me)
-'	Job.Download("https://parseapi.back4app.com/classes/Product")
-'	Job.GetRequest.SetHeader("X-Parse-Application-Id", objConfig.appid)
-'	Job.GetRequest.SetHeader("X-Parse-Master-Key", objConfig.masterkey)
-'	Wait For (Job) JobDone(j As HttpJob)
-'	Log("B4XProductionPage.sendBack4AppRequest: " & j.Success)
-'	If j.Success Then
-'		Log(j.GetString)
-'		Try
-'			Dim jparser As JSONParser
-'			jparser.Initialize(j.GetString)
-'			Dim map1 As Map = jparser.Nextobject
-'			Dim lst1 As List = map1.Get("results")
-'			' lstToJsonString(lst1)
-'			' ListView1.Clear
-'			Dim isFilled As Boolean = fillTheList(lst1)
-'			If isFilled Then
-'				ScrollView1.Panel.RemoveAllViews
-'				' Cast from double to int
-'				ScrollView1.Panel.Height = dybtn.InnerPanelHeight
-'				ScrollView1.Panel.Width = 100%x-20dip
-'				' CreateButton would trigger the event - AddButtonHandler
-'				' to add button(s) to existing scrollview
-'				dybtn.CreateButtons
-'			End If
-'		Catch
-'			Log(LastException)
-'		End Try
-'	End If
-'	j.Release
-'End Sub
 
 Sub fillTheList(i_lst As List) As Boolean
 	If i_lst.IsInitialized = False Then
@@ -362,54 +297,24 @@ End Sub
 'End Sub
 #End Region
 
-#Region AsyncStream_Event
-
-' Try parsing and extract numeric value from electronic scale
-'Sub NumericReading(i_reading As String) As Double
-'	Dim matcher1 As Matcher
-'	matcher1 = Regex.Matcher("[\d\s]+\.[\d\s]+", i_reading)
-'	Do While matcher1.Find = True
-'		Dim tmp As String = matcher1.Match.Trim
-'		If IsNumber(tmp) Then
-'			Return tmp.As(Double)
-'		End If
-'	Loop
-'	Return 0
-'End Sub
-#End Region
-
-' Event handler 
-Sub AddButtonHandler(mapRes As Map)
-	Dim btn As Button = mapRes.Get("button")
-	Dim x As Int = mapRes.Get("x")
-	Dim y As Int = mapRes.Get("y")
-	Dim w As Int = mapRes.Get("w")
-	Dim h As Int = mapRes.Get("h")
-	Dim row As Int = mapRes.Get("r")
-	Dim col As Int = mapRes.Get("c")
-	ScrollView1.Panel.AddView(btn, x, y, w, h)
-	Log("Button added: " & $"(${row}, ${col})"$)
-End Sub
-
-' Event handler
-Sub dybtn_click(res As String)
+' Event handler of custom view i.e. cyDynamicButton1
+Private Sub cvDynamicButton1_ButtonClick (itemnum_1 As String)
 	If IsPaused(svcSerialScale) Then
+		Msgbox2Async("Scale Bluetooth is NOT connected. Please connect the scale bluetooth first.", _
+			"Scale bluetooth not found", "OK", "Cancel", "", Null, True)
 		Return
-	End If
-	
+	End If	
 	If currValue = 0 Or currValue = -1 Then
 		Msgbox2Async("The reading is zero! Please place product on scale.", "Invalid", "OK", "", "", Null, True)
 		Return
-	End If
-	
-	ToastMessageShow(res, False)
-	If modCommon.mapOfProduct.ContainsKey(res) Then
-		Dim obj As clsProduct = modCommon.mapOfProduct.Get(res)
+	End If	
+	ToastMessageShow(itemnum_1, False)
+	If modCommon.mapOfProduct.ContainsKey(itemnum_1) Then
+		Dim obj As clsProduct = modCommon.mapOfProduct.Get(itemnum_1)
 		Log(obj.ProductInfo)
-		
 		Dim objFP As clsFinishedProduct
 		objFP.Initialize
-		objFP.myDeserializeByObject(obj)		
+		objFP.myDeserializeByObject(obj)
 		objFP.WeightInGram = currValue
 		objFP.Barcode = obj.getProductBarcode(currValue)
 		objFP.SellingPrice = obj.calcPriceByWeight(currValue)
@@ -417,15 +322,6 @@ Sub dybtn_click(res As String)
 		objFP.PackedAt = modCommon.getNowWithTimeZone
 		ProgressDialogShow2("Posting...", True)
 		sendFinishedProductIntent("postandprint", "", objFP)
-		'Wait For (sendFinishedProductIntent("postandprint", "", objFP)) Complete(mapRes As Map)
-'		ProgressDialogHide
-'		If mapRes.Get("issuccess").As(Boolean) = False Then
-'			Msgbox2Async("Error: " & CRLF & mapRes.Get("errmsg").As(String), "Operation Error", "OK", "", "", Null, True)
-'			Return 
-'		End If
-'		ToastMessageShow("Item: " & objFP.Product.Itemname2 & " is done.", False)
-		
-		
 	End If
 End Sub
 
@@ -435,8 +331,7 @@ Private Sub ConnectBluetoothDevices()
 	Dim il As List : il.Initialize
 	For i=0 To pairedDevices.Size - 1
 		il.Add(pairedDevices.GetKeyAt(i))
-	Next
-	
+	Next	
 	InputListAsync(il, "Select a device", 0, False)
 	Wait For InputList_Result (Index As Int)
 	If Index <> DialogResponse.CANCEL Then
@@ -444,22 +339,19 @@ Private Sub ConnectBluetoothDevices()
 		Dim btMac As String = pairedDevices.Get(btOption)
 		Select Case btOption 
 			Case "irxon" ' bluetooth adaptor of scale
-				' serialScale.Connect(btMac)
-				' btScale.Connect2(btMac)
 				sendScaleIntent(btMac)
 			Case "XP-365B" ' Xprinter
-				'btPrinter.Connect2(btMac)
 				sendFinishedProductIntent("btconnect", btMac, Null)
+			Case "HC-06" ' Huskylens
+				sendHuskylensIntent(btMac)
 			Case Else
 				Return
 		End Select
-		
-		
 	End If
 End Sub
-
+#Region btPrinter_EventHandlers
 Private Sub btPrinter_NewData (Buffer() As Byte)
-	
+	' Normally, bluetooth printer would not send data back to android 
 End Sub
 
 Private Sub btPrinter_Error
@@ -471,17 +363,37 @@ Private Sub btPrinter_Terminated
 	LogColor("btPrinter Terminated.", Colors.Blue)
 End Sub
 
+Private Sub btPrinter_Connected(isbtOn As Boolean)
+	Log("BT Printer Connected: " & isbtOn)
+End Sub
+
+Private Sub btPrinter_Disconnected(isbtOn As Boolean)
+	Log("BT Printer Disconnected: " & isbtOn)
+End Sub
+#End Region
+
+#Region btScale_EventHandlers
 Private Sub btScale_Connected(issuccess As Boolean)
 	Log("is btScale connected: " & issuccess)
+End Sub
+
+Private Sub btScale_Disconnected()
+	Log("btScale disconnected.")
 End Sub
 
 Private Sub btScale_NewText(mapRes As Map)	
 	If mapRes.IsInitialized = False Then
 		Return
-	End If		
-	currValue = mapRes.Get("value")
-	lblData.Text = mapRes.Get("string")
-	lblReading.Text = mapRes.Get("value") & " gram"	
+	End If
+	If mapRes.ContainsKey("value") Then
+		currValue = mapRes.Get("value")
+		lblReading.Text = currValue & " gram"
+	End If
+	If mapRes.ContainsKey("string") Then
+		' lblData.Text = mapRes.Get("string")
+		LogColor("Data coming from scale: " & CRLF & mapRes.Get("string"), Colors.Blue)
+	End If
+		
 End Sub
 
 Private Sub btScale_Error
@@ -492,27 +404,50 @@ Private Sub btScale_Terminated
 	ToastMessageShow("Connection (Scale) is terminated.", True)
 	LogColor("btScale Terminated.", Colors.Blue)
 End Sub
+#End Region
 
-Private Sub DisconnectBluetoothDevices()
+#Region btHuskylens_EventHandlers
+Private Sub btHuskylens_Connected(issuccess As Boolean)
+	Log("Is btHuskylens connected: " & issuccess)
+End Sub
+
+Private Sub btHuskylens_Disconnected()
+	Log("btHuskylens disconnected.")
+End Sub
+
+Sub btHuskylens_NewText(id As Int)
+	If modCommon.mapOfTrainedData.IsInitialized = False Then
+		lblData.Text = id
+		Return
+	End If
+	' Type conversion
+	Dim id_1 As String = id
+	If modCommon.mapOfTrainedData.ContainsKey(id_1) Then
+		Dim innermap As Map = modCommon.mapOfTrainedData.Get(id_1)
+		Dim name_1 As String = innermap.Get("name")
+		lblData.Text = $"Identified Object: ${name_1}"$
+	End If
+End Sub
+
+Sub btHuskylens_Error
+	ToastMessageShow("Network Error(Huskylens): " & LastException.Message, True)
+	LogColor("btHuskylens Error: " & LastException.Message, Colors.Red)
+End Sub
+
+Sub btHuskylens_Terminated
+	ToastMessageShow("Broken Connection(Huskylens) !!!",True)
+	LogColor("btHuskylens Terminated.", Colors.Blue)
+End Sub
+#End Region
+
+Private Sub DisconnectBluetoothDevices()	
 	
-	'btPrinter.DisConnect
 	Wait For (sendFinishedProductIntent("btdisconnect", "", Null)) Complete(mapRes As Map)
 	
 	If IsPaused(svcSerialScale) = False Then
 		StopService(svcSerialScale)
 	End If
+	If IsPaused(svcSerialHuskylens) = False Then
+		StopService(svcSerialHuskylens)
+	End If
 End Sub
-
-'Sub lstToJsonString(i_lst As List) As String
-'	If i_lst.IsInitialized = False Then
-'		Return "[]"		
-'	End If
-'	Dim jGen As JSONGenerator
-'	Try
-'		jGen.Initialize2(i_lst)
-'		Return jGen.ToPrettyString(4)		
-'	Catch
-'		Log(LastException)
-'		Return "[]"
-'	End Try
-'End Sub

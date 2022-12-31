@@ -23,6 +23,7 @@ End Sub
 
 Sub Service_Start (StartingIntent As Intent)
 	Service.StopAutomaticForeground 'Starter service can start in the foreground state in some edge cases.
+	
 End Sub
 
 Sub Service_TaskRemoved

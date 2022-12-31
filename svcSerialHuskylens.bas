@@ -12,17 +12,18 @@ Version=11.8
 Sub Process_Globals
 	'These global variables will be declared once when the application starts.
 	'These variables can be accessed from all modules.
-	Private AST As AsyncStreamsText
-	Private Serial2 As Serial
+	Private AST As AsyncStreamsJson
+	Private Serial3 As Serial
 	Private flagIsConn As Boolean
 	Private flagConnError As String
-	' Which activity or page consume this service 
+	' Which activity or page consume this service
 	Private mySender As Object
-	' Bluetooth mac address of scale
+	' Bluetooth mac address of HC-06 i.e. Bluetooth module
 	Private myMac As String
-	' current reading text from scale
-	Private currTextReading As String
-	Private currValueReading As Double
+	' current reading text from Huskylens
+	Private currText As String
+	' current identified id from Huskylens
+	Private currId As Int
 End Sub
 
 Sub Service_Create
@@ -31,12 +32,16 @@ Sub Service_Create
 	mySender = Null
 	' myEventHandler = ""
 	myMac = ""
-	currTextReading = ""
-	currValueReading = -1
+	currText = ""
+	currId = -1
 End Sub
 
 Sub Service_Start (StartingIntent As Intent)
 	Service.StopAutomaticForeground 'Call this when the background task completes (if there is one)
+'	If StartingIntent.HasExtra("sender") = False Then
+'		StopService("")
+'		Return
+'	End If
 	If StartingIntent.HasExtra("senderid") = False Then
 		StopService("")
 		Return
@@ -47,19 +52,18 @@ Sub Service_Start (StartingIntent As Intent)
 	End If
 	Dim SenderId_1 As String = StartingIntent.GetExtra("senderid")
 	mySender = B4XPages.GetPage(SenderId_1)
+	' mySender = StartingIntent.GetExtra("sender")
 	myMac = StartingIntent.GetExtra("mac")
-	Serial2.Initialize("Serial2")
-	Connect2(myMac)
-	
+	Serial3.Initialize("Serial3")
+	Connect3(myMac)
 End Sub
 
 Sub Service_Destroy
-	' Release the resources
 	DisConnect
 End Sub
 
-Public Sub getValue() As Double
-	Return currValueReading
+Public Sub getObjectId() As Int	
+	Return currId
 End Sub
 
 #Region Bluetooth_fundamental
@@ -75,24 +79,25 @@ End Sub
 
 Public Sub IsBluetoothOn As Boolean
 	' Returns whether Bluetooth is on or off
-	Return Serial2.IsEnabled
+	Return Serial3.IsEnabled
 End Sub
+
 ' Connect the Scale by MAC address directly
-Private Sub Connect2(mac As String)
-	Serial2.Connect(mac)
+Private Sub Connect3(mac As String)
+	Serial3.Connect(mac)
 End Sub
 
 Private Sub DisConnect
-	' Disconnect the printer
-	If Serial2.IsInitialized Then
-		Serial2.Disconnect
+	' Disconnect the Arduino Uno + Huskylens
+	If Serial3.IsInitialized Then
+		Serial3.Disconnect
 	End If
 	If AST.IsInitialized Then
 		AST.Close
-	End If
+	End If	
 	flagIsConn = False
-	If SubExists(mySender, "btScale_Disconnected") Then
-		CallSub(mySender, "btScale_Disconnected") 'ignore
+	If SubExists(mySender, "btHuskylens_Disconnected") Then
+		CallSub(mySender, "btHuskylens_Disconnected") 'ignore
 	End If
 End Sub
 
@@ -105,20 +110,20 @@ End Sub
 #End Region
 
 #Region Internal_Serial_Events
-Private Sub Serial2_Connected (Success As Boolean)
+Private Sub Serial3_Connected (Success As Boolean)
 	' Internal Serial Events
 	If Success Then
 		If AST.IsInitialized Then AST.Close
-		AST.Initialize(Me, "AST", Serial2.InputStream, Serial2.OutputStream)
+		AST.Initialize(Me, "AST", Serial3.InputStream, Serial3.OutputStream)
 		flagIsConn = True
 		flagConnError = ""
-		Serial2.Listen
+		Serial3.Listen
 	Else
 		flagIsConn = False
 		flagConnError = LastException.Message
 	End If
-	If SubExists(mySender, "btScale_Connected") Then
-		CallSub2(mySender, "btScale_Connected", Success) 'ignore
+	If SubExists(mySender, "btHuskylens_Connected") Then
+		CallSub2(mySender, "btHuskylens_Connected", Success) 'ignore
 	End If
 End Sub
 #End Region
@@ -128,51 +133,63 @@ End Sub
 ' This event would keep interacting with bluetooth scale (i.e. very busy) until the service is terminated
 ' Refresh to UI by CallSub2 in consumer activity or page only the receiving text is different from before.
 ' Thus, asynchronous of I/O interaction is achieved by this service to relieve the bundle of activity
-Private Sub AST_NewText (Text As String)
-	If currTextReading = Text Then 
-		' No change in coming message
-		' Most of time sending same message when the scale is in idle
-		Return
-	End If
+Private Sub AST_NewText (Text As String, idx As Int) 
+	' parameter idx is close curly Index	
+	If Text.Length-1 = idx Then
+		If currText = Text Then
+			' No change in coming message
+			' Most of time sending same message when the Huskylens is in idle
+			Return
+		End If
+	Else
+		If currText = Text.SubString2(0, idx+1) Then
+			' No change in coming message
+			' Most of time sending same message when the Huskylens is in idle
+			Return
+		End If
+	End If		
 	Log("Data " & Text)
 	' Update the current reading
-	currTextReading = Text
-	If Text.Length = 19 Then
+	If Text.Length-1 = idx Then
+		currText = Text
+	Else
+		currText = Text.SubString2(0, idx+1)
+	End If	
+	Dim mapResult As Map = parseJson(currText)
+	If mapResult.IsInitialized And mapResult.ContainsKey("id") Then
 		' Log("Message received: " & Text)
-		If currValueReading <> NumericReading(Text) Then
-			currValueReading = NumericReading(Text)
-			LogColor("Weighting Scale Value : " & Round2(currValueReading, 3) & " g", Colors.Magenta)
-			' lblReading.Text = currValRec & " gram"
+		If currId <> mapResult.Get("id").As(Int) Then
+			currId = mapResult.Get("id").As(Int)
+			LogColor("Huskylens identify object Id: " & currId, Colors.Magenta)
 		End If
 	End If
-	If SubExists(mySender, "btScale_NewText") Then
-		CallSub2(mySender, "btScale_NewText", CreateMap("string": currTextReading, "value": currValueReading)) 'ignore
+	If SubExists(mySender, "btHuskylens_NewText") Then
+		CallSub2(mySender, "btHuskylens_NewText", currId) 'ignore
 	End If
 End Sub
 
 Private Sub AST_Error
-	If SubExists(mySender, "btScale_Error") Then
-		CallSub(mySender, "btScale_Error") 'ignore
+	If SubExists(mySender, "btHuskylens_Error") Then
+		CallSub(mySender, "btHuskylens_Error") 'ignore
 	End If
 End Sub
 
 Private Sub AST_Terminated
 	flagIsConn = False
-	If SubExists(mySender, "btScale_Terminated") Then
-		CallSub(mySender, "btScale_Terminated") 'ignore
+	If SubExists(mySender, "btHuskylens_Terminated") Then
+		CallSub(mySender, "btHuskylens_Terminated") 'ignore
 	End If
 End Sub
 #End Region
 
-' Try parsing and extract numeric value from electronic scale
-Sub NumericReading(i_reading As String) As Double
-	Dim matcher1 As Matcher
-	matcher1 = Regex.Matcher("[\d\s]+\.[\d\s]+", i_reading)
-	Do While matcher1.Find = True
-		Dim tmp As String = matcher1.Match.Trim
-		If IsNumber(tmp) Then
-			Return tmp.As(Double)
-		End If
-	Loop
-	Return 0
+Private Sub parseJson(jstr As String) As Map
+	Dim jParser As JSONParser
+	Try
+		jParser.Initialize(jstr)
+		Dim m As Map = jParser.NextObject
+		Return m
+	Catch
+		LogColor("svcSerialHuskylens.parseJson: " & CRLF & LastException.Message, Colors.Red)
+		Return CreateMap()
+	End Try
 End Sub

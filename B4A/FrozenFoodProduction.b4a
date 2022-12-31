@@ -1,58 +1,65 @@
 ﻿Build1=Default,hk.frozenfood.product
 File1=drawermenuitems.bal
-File10=rowlayout.bal
-File11=sidemenu.bal
-File2=FrozenFood.png
-File3=hamburger.png
-File4=ItemPage.bal
-File5=MainPage.bal
-File6=materialdesignicons-webfont.ttf
-File7=ProductionPage.bal
-File8=pulltorefresh.bal
-File9=RecordPage.bal
+File10=RecordPage.bal
+File11=rowlayout.bal
+File12=sidemenu.bal
+File13=trainedresult.json
+File2=dynamicbutton.bal
+File3=FrozenFood.png
+File4=hamburger.png
+File5=ItemPage.bal
+File6=MainPage.bal
+File7=materialdesignicons-webfont.ttf
+File8=ProductionPage.bal
+File9=pulltorefresh.bal
 FileGroup1=Default Group
 FileGroup10=Default Group
 FileGroup11=Default Group
-FileGroup2=Resources Group
+FileGroup12=Default Group
+FileGroup13=Default Group
+FileGroup2=Default Group
 FileGroup3=Resources Group
-FileGroup4=Default Group
+FileGroup4=Resources Group
 FileGroup5=Default Group
-FileGroup6=Resources Group
-FileGroup7=Default Group
+FileGroup6=Default Group
+FileGroup7=Resources Group
 FileGroup8=Default Group
 FileGroup9=Default Group
 Group=Default Group
 Library1=b4xdrawer
-Library10=dialogs
+Library10=xui views
+Library11=runtimepermissions
 Library2=b4xpages
 Library3=byteconverter
 Library4=core
-Library5=json
-Library6=okhttputils2
-Library7=randomaccessfile
-Library8=serial
-Library9=xui views
-ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="5" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
-Module1=|relative|..\AsyncStreamsText
-Module10=|relative|..\CLVSwipe
-Module11=|relative|..\cvDynamicButton
-Module12=|relative|..\DrawerManager
-Module13=|relative|..\modCommon
-Module14=Starter
-Module15=|relative|..\svcBack4AppFinishedProduct
-Module16=|relative|..\svcBack4AppProduct
-Module17=|relative|..\svcSerialScale
-Module2=|relative|..\B4XItemPage
-Module3=|relative|..\B4XMainPage
-Module4=|relative|..\B4XProductionPage
-Module5=|relative|..\B4XRecordPage
-Module6=|relative|..\clsConfig
-Module7=|relative|..\clsFinishedProduct
-Module8=|relative|..\clsProduct
-Module9=|relative|..\clsTSPLPrinter
-NumberOfFiles=11
-NumberOfLibraries=10
-NumberOfModules=17
+Library5=dialogs
+Library6=json
+Library7=okhttputils2
+Library8=randomaccessfile
+Library9=serial
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~  android:maxSdkVersion="29" />~\n~)~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.READ_EXTERNAL_STORAGE"~\n~  android:maxSdkVersion="29" />~\n~)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'AddPermission("android.permission.WRITE_EXTERNAL_STORAGE")~\n~'AddPermission("android.permission.READ_EXTERNAL_STORAGE")~\n~'End of default text.~\n~
+Module1=|relative|..\AsyncStreamsJson
+Module10=|relative|..\clsTSPLPrinter
+Module11=|relative|..\CLVSwipe
+Module12=|relative|..\cvDynamicButton
+Module13=|relative|..\DrawerManager
+Module14=|relative|..\modCommon
+Module15=Starter
+Module16=|relative|..\svcBack4AppFinishedProduct
+Module17=|relative|..\svcBack4AppProduct
+Module18=|relative|..\svcSerialHuskylens
+Module19=|relative|..\svcSerialScale
+Module2=|relative|..\AsyncStreamsText
+Module3=|relative|..\B4XItemPage
+Module4=|relative|..\B4XMainPage
+Module5=|relative|..\B4XProductionPage
+Module6=|relative|..\B4XRecordPage
+Module7=|relative|..\clsConfig
+Module8=|relative|..\clsFinishedProduct
+Module9=|relative|..\clsProduct
+NumberOfFiles=13
+NumberOfLibraries=11
+NumberOfModules=19
 Version=11.8
 @EndOfDesignText@
 #Region  Project Attributes 
@@ -73,6 +80,7 @@ Version=11.8
 
 Sub Process_Globals
 	Public ActionBarHomeClicked As Boolean
+	Private rp As RuntimePermissions
 End Sub
 
 Sub Globals
@@ -84,6 +92,24 @@ Sub Activity_Create(FirstTime As Boolean)
 	pm.Initialize(Activity)
 	' To Enable logging B4XPages events
 	B4XPages.GetManager.LogEvents = True
+	If FirstTime Then
+		rp.CheckAndRequest(rp.PERMISSION_WRITE_EXTERNAL_STORAGE)
+		Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+		If Result Then
+			Dim isInited As Boolean = initIt
+			If isInited Then
+				rp.CheckAndRequest(rp.PERMISSION_READ_EXTERNAL_STORAGE)
+				Wait For Activity_PermissionResult (Permission As String, Result As Boolean)
+				If Result = False Then
+					LogColor("No Read permission!", Colors.Red)
+					Return
+				End If
+				parsingTrainedData
+			End If
+		Else
+			LogColor("No Write permission!", Colors.Red)
+		End If
+	End If
 End Sub
 
 'Template version: B4A-1.01
@@ -92,6 +118,8 @@ End Sub
 Sub Activity_ActionBarHomeClick
 	ActionBarHomeClicked = True
  	B4XPages.Delegate.Activity_ActionBarHomeClick
+	' enable logging B4XPages events
+	B4XPages.GetManager.LogEvents = True
 	ActionBarHomeClicked = False
 End Sub
 
@@ -124,3 +152,43 @@ public boolean _onCreateOptionsMenu(android.view.Menu menu) {
 #End Region
 
 'Program code should go into B4XMainPage and other pages.
+
+' This function would check necessary files exist or not
+Private Sub initIt() As Boolean
+	If File.Exists(File.DirDefaultExternal, "config") = False Then
+		File.MakeDir(File.DirDefaultExternal, "config")
+	End If
+	If File.Exists(File.DirDefaultExternal, "config/trainedresult.json") Then
+		Return True
+	End If
+	If File.Exists(File.DirAssets, "trainedresult.json") = False Then
+		File.WriteString(File.DirDefaultExternal, "config/trainedresult.json", "{}")
+		Return False
+	End If
+	Try
+		File.Copy(File.DirAssets, "trainedresult.json", File.DirDefaultExternal & "/config", "trainedresult.json")
+		Return True
+	Catch
+		Log(LastException)
+		Return False
+	End Try
+End Sub
+
+Private Sub parsingTrainedData() As Boolean
+	If File.Exists(File.DirDefaultExternal, "config/trainedresult.json") = False Then
+		' create an empty map
+		modCommon.mapOfTrainedData.Initialize
+		Return False
+	End If
+	Dim jParser As JSONParser
+	Try
+		jParser.Initialize(File.ReadString(File.DirDefaultExternal, "config/trainedresult.json"))
+		modCommon.mapOfTrainedData = jParser.NextObject
+		Return True
+	Catch
+		Log(LastException)
+		' create an empty map
+		modCommon.mapOfTrainedData.Initialize
+		Return False
+	End Try
+End Sub

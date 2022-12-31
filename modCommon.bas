@@ -14,6 +14,7 @@ Sub Process_Globals
 	' Public listOfProduct As List
 	' The key is item number while the value is clsProduct 
 	Public mapOfProduct As Map
+	Public mapOfTrainedData As Map
 End Sub
 
 Public Sub getNowForShown() As String
