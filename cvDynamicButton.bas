@@ -7,6 +7,7 @@ Version=11.2
 'Custom View class 
 #Event: ButtonClick (itemnum As String)
 #Event: LayoutLoaded
+#Event: Refresh
 #DesignerProperty: Key: BooleanExample, DisplayName: Boolean Example, FieldType: Boolean, DefaultValue: True, Description: Example of a boolean property.
 #DesignerProperty: Key: IntExample, DisplayName: Int Example, FieldType: Int, DefaultValue: 10, MinRange: 0, MaxRange: 100, Description: Note that MinRange and MaxRange are optional.
 #DesignerProperty: Key: StringWithListExample, DisplayName: String With List, FieldType: String, DefaultValue: Sunday, List: Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday
@@ -26,12 +27,17 @@ Sub Class_Globals
 	Private m_PanelHeight As Int
 	Type Pos(x As Int,y As Int)
 	Private svDynamicButton As ScrollView
+	' Pull to refresh controls
+	Private lblPullToRefresh As Label
+	Private ProgressBar1 As ProgressBar
+	Private timer1 As Timer
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
 	mEventName = EventName
 	mCallBack = Callback
 	m_NumOfRow = -1
+	timer1.Initialize("timer", 1200)
 End Sub
 
 Public Sub DesignerCreateView (Base As Panel, Lbl As Label, Props As Map)
@@ -101,8 +107,11 @@ Public Sub FillTheData() As Boolean
 	' the inner panel height is dependent on the number of rows * height of each button
 	svDynamicButton.Panel.Height = getInnerPanelHeight
 	If svDynamicButton.IsInitialized Then
-		svDynamicButton.Panel.RemoveAllViews
+		svDynamicButton.Panel.RemoveAllViews		
 		Dim isCreated As Boolean = CreateButtons
+		If isCreated Then
+			
+		End If
 		Return isCreated
 	End If
 	Return False
@@ -157,5 +166,46 @@ Sub ButtonX_Click
 End Sub
 
 Private Sub svDynamicButton_ScrollChanged(Position As Int)
-	
+	If Position = 0 Or Position < 0 Then
+		Log("Top: " & Position)
+		Return
+	End If
+	If Position = svDynamicButton.Panel.Height - svDynamicButton.Height Then
+		Log("Bottom: " & Position)
+		' add pull-to-refresh
+		Dim p As Panel : p.Initialize("")
+		p.Tag = "refresh"
+		Dim innerpanelHeight As Int = getInnerPanelHeight
+		svDynamicButton.Panel.Height = innerpanelHeight + 70dip		
+		svDynamicButton.Panel.AddView(p, 0, innerpanelHeight, 100%x, 70dip)
+		p.LoadLayout("PullToRefresh.bal")
+		ProgressBar1.Visible = True	
+		' the timer is used to let user to see the pull effect before escape
+		timer1.Enabled = True
+		wait for timer_tick
+		timer1.Enabled = False
+		If SubExists(mCallBack, mEventName & "_Refresh") Then
+			CallSubDelayed(mCallBack, mEventName & "_Refresh")
+		End If	
+	End If
 End Sub
+
+'Private Sub Refresh
+	'CallSub(mCallBack, mEventName & "_Refresh")
+	'BottomPanelRefreshing = True
+'End Sub
+
+'Public Sub StopRefresh
+'	'BottomPanelRefreshing = False
+'	'BottomPanelVisible = False
+'	' If svDynamicButton.Panel.Size
+'	If m_NumOfRow > 0 Then
+'		' The index of last item in scrollview is m_NumOfRow
+'		Dim p As Panel = svDynamicButton.Panel.GetView(m_NumOfRow)
+'		' If p.GetView(0) = TopPanel Then RemoveAt(0)
+'		If p.Tag = "refresh" Then
+'			p.RemoveAllViews
+'		End If
+'		svDynamicButton.Panel.Height = getInnerPanelHeight
+'	End If
+'End Sub

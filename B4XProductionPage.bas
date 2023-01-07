@@ -13,7 +13,7 @@ Sub Class_Globals
 	Private clvDrawer As CustomListView
 	Private clvIcon As Label
 	Private clvMenuLabel As Label
-	Private objConfig As clsConfig
+	'Private objConfig As clsConfig
 	#End Region	
 	Private lstProduct As List
 	' Private rp As RuntimePermissions
@@ -32,10 +32,10 @@ End Sub
 
 'You can add more parameters here.
 Public Sub Initialize As Object
-	objConfig.Initialize
+	'objConfig.Initialize
 	lstProduct.Initialize	
 	mySerial.Initialize("mySerial")
-	currValue = -1	
+	currValue = -1		
 	Return Me
 End Sub
 
@@ -47,7 +47,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	lstOfFoundDevices.Initialize
 	
 	'load the layout to Root
-	drManager.Initialize(Me, "Drawer", Root, 200dip)
+	drManager.Initialize(Me, "Drawer", Root, 220dip)
 	drManager.myDrawer.CenterPanel.LoadLayout("ProductionPage.bal")
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
 	' Event handler is B4XPage_MenuClick
@@ -65,6 +65,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	LogColor("ScrollView's height: " & svHeight, Colors.Blue)
 	LogColor("ScrollView's width: " & svWidth, Colors.Blue)
 	cvDynamicButton1.setPanelHeightWidth(svHeight, svWidth)
+	lblData.Text = ""
+	lblReading.Text = ""
 	' ScrollView1.Panel.Width = svWidth	
 End Sub
 
@@ -90,10 +92,6 @@ End Sub
 Private Sub B4XPage_Disappear
 	drManager.B4XPageDisappear
 	cvDynamicButton1.resetNumOfRow
-'	If IsPaused( svcSerialScale) = False Then
-'		StopService(svcSerialScale)
-'	End If
-'	mySerial.Disconnect
 End Sub
 
 ' For DrawerMenu
@@ -101,7 +99,6 @@ Private Sub B4XPage_Resize (Width As Int, Height As Int)
 	drManager.myDrawer.Resize(Width, Height)
 End Sub
 #End Region
-
 
 Private Sub B4XPage_MenuClick(Tag As String)
 	Log("B4XPage_MenuClick: " & Tag)
@@ -201,6 +198,14 @@ Private Sub cvDynamicButton1_LayoutLoaded
 		sendProductIntent("query")
 	End If
 End Sub
+' this event hander - Refresh would be triggered if
+' custom view pull to refresh in scrollview
+Private Sub cvDynamicButton1_Refresh
+	Log("Pull to refresh")
+	' reset the num of row to get new data
+	cvDynamicButton1.resetNumOfRow
+	sendProductIntent("query")
+End Sub
 
 Sub getProductResponse(mapRes As Map)
 	StopService(svcBack4AppProduct)
@@ -246,8 +251,7 @@ Sub fillTheList(i_lst As List) As Boolean
 	End If
 	' Clone the responsed list to public product list
 	For Each entry As Map In i_lst
-		Dim obj As clsProduct
-		obj.Initialize
+		Dim obj As clsProduct : obj.Initialize
 		Dim isDeSer As Boolean = obj.myDeserialize(entry)
 		If isDeSer Then
 			If modCommon.mapOfProduct.ContainsKey(obj.Itemnum) = False Then

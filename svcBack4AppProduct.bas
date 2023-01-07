@@ -40,8 +40,14 @@ Sub Service_Start (StartingIntent As Intent)
 	Select task_1
 		Case "query"
 			Wait For (sendBack4AppRequest) Complete(isSuccess As Boolean)
-			CallSubDelayed2(mySender, "getProductResponse", _
-				CreateMap("issuccess": isSuccess, "datalist": lstOfProduct))
+			If isSuccess Then
+				CallSubDelayed2(mySender, "getProductResponse", _
+					CreateMap("issuccess": True, "datalist": lstOfProduct))
+			Else
+				CallSubDelayed2(mySender, "getProductResponse", _
+					CreateMap("issuccess": False))	
+			End If
+			
 	End Select
 	
 End Sub

@@ -6,15 +6,12 @@ Version=11.2
 @EndOfDesignText@
 Sub Class_Globals
 	Public myDrawer As B4XDrawer
-	Private mRoot As B4XView
-	
+	Private mRoot As B4XView	
 	Private DrawerBasePanel As B4XView
 	Private HamburgerIcon As B4XBitmap
-	Private xui As XUI
-	
+	Private xui As XUI	
 	Public menuItems As List
-	Public menuIcons As List
-	
+	Public menuIcons As List	
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String, Root As B4XView, Width As Int)
@@ -27,8 +24,8 @@ Public Sub Initialize (Callback As Object, EventName As String, Root As B4XView,
 	menuIcons.Initialize
 	'Icons taken from materialdesignicons-webfont.ttf please use the bellow tool
 	' https://www.b4x.com/android/forum/threads/b4x-materialicons-web-font-chooser.103985/
-	menuIcons.AddAll(Array As String( Chr(0xfccc), Chr(0xf008), Chr(0xf1ad) ))
-	menuItems.AddAll(Array As String( "Production", "Records", "Items"))
+	menuIcons.AddAll(Array As String( Chr(0xf2dc), Chr(0xfccc), Chr(0xf008), Chr(0xf1b8) ))
+	menuItems.AddAll(Array As String( "Main", "Production", "Records", "Items"))
 End Sub
 
 
@@ -75,12 +72,15 @@ Public Sub mainMenu(value As Int)
 	LogColor("drawer mainMenu selection: " & value, Colors.Magenta)
 	Select value
 		Case 0
+			Log("Main Page")
+			B4XPages.ShowPageandRemovePreviousPages("MainPage")
+		Case 1
 			Log("Page Production")
 			B4XPages.ShowPageandRemovePreviousPages("pidProduction")
-		Case 1
+		Case 2			
 			Log("Page Record")
 			B4XPages.ShowPageandRemovePreviousPages("pidRecord")
-		Case 2
+		Case 3
 			Log("Page Item")
 			B4XPages.ShowPageandRemovePreviousPages("pidItem")
 	End Select

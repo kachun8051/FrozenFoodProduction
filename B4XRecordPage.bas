@@ -46,7 +46,7 @@ End Sub
 Private Sub B4XPage_Created (Root1 As B4XView)
 	Root = Root1
 	'load the layout to Root
-	drManager.Initialize(Me, "Drawer", Root, 200dip)
+	drManager.Initialize(Me, "Drawer", Root, 220dip)
 	drManager.myDrawer.CenterPanel.LoadLayout("RecordPage.bal")
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
 	createMenu
@@ -93,7 +93,7 @@ Private Sub B4XPage_Disappear
 	drManager.B4XPageDisappear
 End Sub
 
-'Χρειάζεται για το DrawerMenu
+' For DrawerMenu
 Private Sub B4XPage_Resize (Width As Int, Height As Int)
 	drManager.myDrawer.Resize(Width, Height)
 End Sub
@@ -116,7 +116,7 @@ Private Sub createMenu
 		Dim height As Int = 50dip
 		Dim width As Int = 160dip
 		p.SetLayoutAnimated(0, 0, 0, width, height)
-		p.LoadLayout("drawerMenuItems")
+		p.LoadLayout("drawerMenuItems.bal")
 		clvIcon.Text = drManager.menuIcons.Get(i)
 		clvMenuLabel.Text = drManager.menuItems.Get(i)
 		clvDrawer.Add(p, i)
@@ -164,7 +164,7 @@ Private Sub FillTheList() As Boolean
 	End If
 	For Each mapEntry As Map In lstOfProduction
 		Dim p As B4XView = xui.CreatePanel("")
-		p.SetLayoutAnimated(0, 0, 0, CLV1.AsView.Width, 180dip)
+		p.SetLayoutAnimated(0, 0, 0, CLV1.AsView.Width, 170dip)
 		Dim swipeitem As SwipeItem = Swipe.CreateItemValue(mapEntry, Array("Delete", "Print", "Info"))
 		CLV1.Add(p, swipeitem)
 	Next
@@ -180,7 +180,7 @@ Sub CLV1_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
 			Dim map_1 As Map = swipeitem_1.Value
 			'**************** this code is similar to the code in CreateItem from the original example
 			p.LoadLayout("RowLayout.bal")
-			lblItemNo.Text = map_1.Get("itemnum")
+			lblItemNo.Text = "#" & map_1.Get("itemnum")
 			lblName.Text = map_1.Get("itemname")
 			lblName2.Text = map_1.Get("itemname2")
 			lblSellingPrice.Text = "HK$" & map_1.Get("sellingprice")

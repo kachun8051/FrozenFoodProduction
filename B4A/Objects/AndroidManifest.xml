@@ -50,19 +50,19 @@
 			android:exported="true">
 		</receiver>
 		<service
-			android:name=".svcback4appfinishedproduct"
-			android:exported="true">
-		</service>
-		<receiver
-			android:name=".svcback4appfinishedproduct$svcback4appfinishedproduct_BR"
-			android:exported="true">
-		</receiver>
-		<service
 			android:name=".svcback4appproduct"
 			android:exported="true">
 		</service>
 		<receiver
 			android:name=".svcback4appproduct$svcback4appproduct_BR"
+			android:exported="true">
+		</receiver>
+		<service
+			android:name=".svcback4appfinishedproduct"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcback4appfinishedproduct$svcback4appfinishedproduct_BR"
 			android:exported="true">
 		</receiver>
 		<service
