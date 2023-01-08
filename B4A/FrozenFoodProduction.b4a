@@ -1,58 +1,60 @@
 ﻿Build1=Default,hk.frozenfood.product
 File1=appcover.jpg
-File10=itemlayout.bal
-File11=ItemPage.bal
-File12=itempage2.bal
-File13=lobster.png
-File14=MainPage.bal
-File15=materialdesignicons-webfont.ttf
-File16=porkslice.png
-File17=portunus.png
-File18=ProductionPage.bal
-File19=pulltorefresh.bal
-File2=appcover.png
-File20=RecordPage.bal
-File21=rowlayout.bal
-File22=safflowercrab.png
-File23=sidemenu.bal
-File24=squid.png
-File25=tenderloin.png
-File26=trainedresult.json
-File27=woodenboard.png
+File10=hamburger.png
+File11=icecubes_small.png
+File12=itemlayout.bal
+File13=ItemPage.bal
+File14=lobster.png
+File15=MainPage.bal
+File16=materialdesignicons-webfont.ttf
+File17=porkslice.png
+File18=portunus.png
+File19=ProductionPage.bal
+File2=beefslice.png
+File20=pulltorefresh.bal
+File21=RecordPage.bal
+File22=rowlayout.bal
+File23=safflowercrab.png
+File24=sidemenu.bal
+File25=squid.png
+File26=tenderloin.png
+File27=trainedresult.json
+File28=woodenboard.png
 File3=breamfish.png
-File4=drawermenuitems.bal
-File5=dynamicbutton.bal
-File6=FrozenFood.png
-File7=greenshrimp.png
-File8=hamburger.png
-File9=icecubes_small.png
+File4=DiagnosisPage.bal
+File5=drawermenuitems.bal
+File6=dynamicbutton.bal
+File7=FrozenFood.png
+File8=frozenfoodlogo.png
+File9=greenshrimp.png
 FileGroup1=Default Group
-FileGroup10=Default Group
+FileGroup10=Resources Group
 FileGroup11=Default Group
 FileGroup12=Default Group
-FileGroup13=Carousel Group
-FileGroup14=Default Group
-FileGroup15=Resources Group
-FileGroup16=Carousel Group
+FileGroup13=Default Group
+FileGroup14=Carousel Group
+FileGroup15=Default Group
+FileGroup16=Resources Group
 FileGroup17=Carousel Group
-FileGroup18=Default Group
+FileGroup18=Carousel Group
 FileGroup19=Default Group
-FileGroup2=Default Group
+FileGroup2=Carousel Group
 FileGroup20=Default Group
 FileGroup21=Default Group
-FileGroup22=Carousel Group
-FileGroup23=Default Group
-FileGroup24=Carousel Group
+FileGroup22=Default Group
+FileGroup23=Carousel Group
+FileGroup24=Default Group
 FileGroup25=Carousel Group
-FileGroup26=Default Group
+FileGroup26=Carousel Group
 FileGroup27=Default Group
+FileGroup28=Default Group
 FileGroup3=Carousel Group
 FileGroup4=Default Group
 FileGroup5=Default Group
-FileGroup6=Resources Group
-FileGroup7=Carousel Group
-FileGroup8=Resources Group
-FileGroup9=Default Group
+FileGroup6=Default Group
+FileGroup7=Resources Group
+FileGroup8=Default Group
+FileGroup9=Carousel Group
 Group=Default Group
 Library1=b4xdrawer
 Library10=serial
@@ -67,34 +69,35 @@ Library8=randomaccessfile
 Library9=runtimepermissions
 ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.WRITE_EXTERNAL_STORAGE"~\n~  android:maxSdkVersion="29" />~\n~)~\n~AddManifestText(~\n~<uses-permission~\n~  android:name="android.permission.READ_EXTERNAL_STORAGE"~\n~  android:maxSdkVersion="29" />~\n~)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'AddPermission("android.permission.WRITE_EXTERNAL_STORAGE")~\n~'AddPermission("android.permission.READ_EXTERNAL_STORAGE")~\n~'End of default text.~\n~
 Module1=|relative|..\AsyncStreamsJson
-Module10=|relative|..\clsTSPLPrinter
-Module11=|relative|..\CLVSwipe
-Module12=|relative|..\cvDynamicButton
-Module13=|relative|..\DrawerManager
-Module14=|relative|..\ImageSlider
-Module15=|relative|..\modCommon
-Module16=Starter
-Module17=|relative|..\svcBack4AppFinishedProduct
-Module18=|relative|..\svcBack4AppProduct
-Module19=|relative|..\svcSerialHuskylens
+Module10=|relative|..\clsProduct
+Module11=|relative|..\clsTSPLPrinter
+Module12=|relative|..\CLVSwipe
+Module13=|relative|..\cvDynamicButton
+Module14=|relative|..\DrawerManager
+Module15=|relative|..\ImageSlider
+Module16=|relative|..\modCommon
+Module17=Starter
+Module18=|relative|..\svcBack4AppFinishedProduct
+Module19=|relative|..\svcBack4AppProduct
 Module2=|relative|..\AsyncStreamsText
-Module20=|relative|..\svcSerialScale
-Module3=|relative|..\B4XItemPage
-Module4=|relative|..\B4XMainPage
-Module5=|relative|..\B4XProductionPage
-Module6=|relative|..\B4XRecordPage
-Module7=|relative|..\clsConfig
-Module8=|relative|..\clsFinishedProduct
-Module9=|relative|..\clsProduct
-NumberOfFiles=27
+Module20=|relative|..\svcSerialHuskylens
+Module21=|relative|..\svcSerialScale
+Module3=|relative|..\B4XDiagnosisPage
+Module4=|relative|..\B4XItemPage
+Module5=|relative|..\B4XMainPage
+Module6=|relative|..\B4XProductionPage
+Module7=|relative|..\B4XRecordPage
+Module8=|relative|..\clsConfig
+Module9=|relative|..\clsFinishedProduct
+NumberOfFiles=28
 NumberOfLibraries=11
-NumberOfModules=20
+NumberOfModules=21
 Version=11.8
 @EndOfDesignText@
 #Region  Project Attributes 
 	#ApplicationLabel: Frozen Food Production
 	#VersionCode: 1
-	#VersionName: 
+	#VersionName: 1.0
 	'SupportedOrientations possible values: unspecified, landscape or portrait.
 	#SupportedOrientations: unspecified
 	#CanInstallToExternalStorage: False
@@ -136,6 +139,7 @@ Sub Activity_Create(FirstTime As Boolean)
 					Return
 				End If
 				parsingTrainedData
+				parsingBluetoothMacAddress
 			End If
 		Else
 			LogColor("No Write permission!", Colors.Red)
@@ -220,6 +224,25 @@ Private Sub parsingTrainedData() As Boolean
 		Log(LastException)
 		' create an empty map
 		modCommon.mapOfTrainedData.Initialize
+		Return False
+	End Try
+End Sub
+
+Private Sub parsingBluetoothMacAddress() As Boolean
+	If File.Exists(File.DirDefaultExternal, "config/bluetoothmacaddress.json") = False Then
+		' create an empty map
+		modCommon.mapOfMacAddress.Initialize
+		Return True
+	End If
+	Dim jParser As JSONParser
+	Try
+		jParser.Initialize(File.ReadString(File.DirDefaultExternal, "config/bluetoothmacaddress.json"))
+		modCommon.mapOfMacAddress = jParser.NextObject
+		Return True
+	Catch
+		Log(LastException)
+		' create an empty map
+		modCommon.mapOfMacAddress.Initialize
 		Return False
 	End Try
 End Sub

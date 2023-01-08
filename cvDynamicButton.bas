@@ -31,6 +31,9 @@ Sub Class_Globals
 	Private lblPullToRefresh As Label
 	Private ProgressBar1 As ProgressBar
 	Private timer1 As Timer
+	' timer2 is used to prevent frequent query and refresh to the button 
+	' due to the scrollbar of scrollview is still too lower
+	Private timer2 As Timer
 End Sub
 
 Public Sub Initialize (Callback As Object, EventName As String)
@@ -38,6 +41,8 @@ Public Sub Initialize (Callback As Object, EventName As String)
 	mCallBack = Callback
 	m_NumOfRow = -1
 	timer1.Initialize("timer", 1200)
+	timer2.Initialize("timer2", 2000)
+	' m_flagIsRefreshing = False
 End Sub
 
 Public Sub DesignerCreateView (Base As Panel, Lbl As Label, Props As Map)
@@ -103,12 +108,19 @@ Private Sub getInnerPanelHeight() As Int
 	Return m_NumOfRow * m_BtnHeight
 End Sub
 
-Public Sub FillTheData() As Boolean
+Public Sub FillTheData() As ResumableSub
 	' the inner panel height is dependent on the number of rows * height of each button
 	svDynamicButton.Panel.Height = getInnerPanelHeight
 	If svDynamicButton.IsInitialized Then
 		svDynamicButton.Panel.RemoveAllViews		
 		Dim isCreated As Boolean = CreateButtons
+		If ProgressBar1.IsInitialized Then
+			timer2.Enabled = True
+			Wait For timer2_Tick
+			timer2.Enabled = False
+			' Reset the ProgressBar1 because it is an indicator of pull-to-refresh
+			ProgressBar1.Visible = False
+		End If
 		If isCreated Then
 			
 		End If
@@ -131,6 +143,7 @@ Private Sub CreateButtons() As Boolean
 	Dim NumOfProduct As Int = modCommon.mapOfProduct.Size ' modCommon.listOfProduct.Size
 	m_NumOfRow = getNumOfRow
 	LogColor("NumOfRow: " & m_NumOfRow, Colors.Blue) 
+	Dim lstLog As List : lstLog.Initialize
 	For c = 0 To m_NumOfCol-1
 		For r = 0 To m_NumOfRow-1
 			Dim idx As Int = r * m_NumOfCol + c
@@ -147,9 +160,10 @@ Private Sub CreateButtons() As Boolean
 			ButtonX.Text = obj.Itemname
 			ButtonX.TextSize = 16
 			svDynamicButton.Panel.AddView(ButtonX,c*m_BtnWidth,r*m_BtnHeight,m_BtnWidth,m_BtnHeight)
-			Log("Button added: " & $"(${r}, ${c})"$)
+			lstLog.Add("Button added: " & $"(${r}, ${c})"$)
 		Next
 	Next
+	Log(lstLog.Size & " X Buttons are added.")
     Return True
 End Sub
 
@@ -166,8 +180,14 @@ Sub ButtonX_Click
 End Sub
 
 Private Sub svDynamicButton_ScrollChanged(Position As Int)
+	
 	If Position = 0 Or Position < 0 Then
 		Log("Top: " & Position)
+		Return
+	End If
+	If ProgressBar1.IsInitialized And ProgressBar1.Visible = True Then
+		' When the progressbar1 is visible. It is working and no need duplicated query and refresh.
+		Log("ProgressBar1 is visible. It is working.")
 		Return
 	End If
 	If Position = svDynamicButton.Panel.Height - svDynamicButton.Height Then
@@ -179,33 +199,15 @@ Private Sub svDynamicButton_ScrollChanged(Position As Int)
 		svDynamicButton.Panel.Height = innerpanelHeight + 70dip		
 		svDynamicButton.Panel.AddView(p, 0, innerpanelHeight, 100%x, 70dip)
 		p.LoadLayout("PullToRefresh.bal")
-		ProgressBar1.Visible = True	
+		ProgressBar1.Visible = True
+		' m_flagIsRefreshing = True	
 		' the timer is used to let user to see the pull effect before escape
 		timer1.Enabled = True
 		wait for timer_tick
 		timer1.Enabled = False
+		Log("Pull to refresh is done.")		
 		If SubExists(mCallBack, mEventName & "_Refresh") Then
 			CallSubDelayed(mCallBack, mEventName & "_Refresh")
 		End If	
 	End If
 End Sub
-
-'Private Sub Refresh
-	'CallSub(mCallBack, mEventName & "_Refresh")
-	'BottomPanelRefreshing = True
-'End Sub
-
-'Public Sub StopRefresh
-'	'BottomPanelRefreshing = False
-'	'BottomPanelVisible = False
-'	' If svDynamicButton.Panel.Size
-'	If m_NumOfRow > 0 Then
-'		' The index of last item in scrollview is m_NumOfRow
-'		Dim p As Panel = svDynamicButton.Panel.GetView(m_NumOfRow)
-'		' If p.GetView(0) = TopPanel Then RemoveAt(0)
-'		If p.Tag = "refresh" Then
-'			p.RemoveAllViews
-'		End If
-'		svDynamicButton.Panel.Height = getInnerPanelHeight
-'	End If
-'End Sub

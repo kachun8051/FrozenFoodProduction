@@ -3,7 +3,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="hk.frozenfood.product"
 	android:versionCode="1"
-	android:versionName=""
+	android:versionName="1.0"
 	android:installLocation="internalOnly">
 	
 	<uses-sdk android:minSdkVersion="19" android:targetSdkVersion="29"/>
@@ -58,6 +58,14 @@
 			android:exported="true">
 		</receiver>
 		<service
+			android:name=".svcserialscale"
+			android:exported="true">
+		</service>
+		<receiver
+			android:name=".svcserialscale$svcserialscale_BR"
+			android:exported="true">
+		</receiver>
+		<service
 			android:name=".svcback4appfinishedproduct"
 			android:exported="true">
 		</service>
@@ -71,14 +79,6 @@
 		</service>
 		<receiver
 			android:name=".svcserialhuskylens$svcserialhuskylens_BR"
-			android:exported="true">
-		</receiver>
-		<service
-			android:name=".svcserialscale"
-			android:exported="true">
-		</service>
-		<receiver
-			android:name=".svcserialscale$svcserialscale_BR"
 			android:exported="true">
 		</receiver>
 		<service

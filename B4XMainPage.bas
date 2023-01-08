@@ -23,6 +23,7 @@ Sub Class_Globals
 	Private pProduction As B4XProductionPage
 	Private pRecord As B4XRecordPage
 	Private pItem As B4XItemPage
+	Private pDiagnosis As B4XDiagnosisPage
 	Private btnExit As Button
 	Private ImageView1 As ImageView
 	Private btnNext As Button
@@ -53,6 +54,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	B4XPages.AddPage("pidRecord", pRecord)
 	pItem.Initialize
 	B4XPages.AddPage("pidItem", pItem)	
+	pDiagnosis.Initialize
+	B4XPages.AddPage("pidDiagnosis", pDiagnosis)
 '	Label1.Text = "Welcome To" & CRLF & "Frozen Food Production"	
 	initMainPage
 End Sub

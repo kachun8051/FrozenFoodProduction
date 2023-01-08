@@ -45,10 +45,18 @@ Sub Service_Start (StartingIntent As Intent)
 		StopService("")
 		Return
 	End If
+'	If StartingIntent.HasExtra("mac") Then
+'		myMac = StartingIntent.GetExtra("mac")
+'	Else
+'		If myMac = "" Then
+'			StopService("")
+'			Return
+'		End If
+'	End If	
 	Dim SenderId_1 As String = StartingIntent.GetExtra("senderid")
-	mySender = B4XPages.GetPage(SenderId_1)
+	mySender = B4XPages.GetPage(SenderId_1)	
 	myMac = StartingIntent.GetExtra("mac")
-	Serial2.Initialize("Serial2")
+	Serial2.Initialize("Serial2")	
 	Connect2(myMac)
 	
 End Sub

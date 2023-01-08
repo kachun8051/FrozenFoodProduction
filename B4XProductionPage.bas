@@ -7,7 +7,7 @@ Version=11.2
 Sub Class_Globals
 	Private Root As B4XView 'ignore
 	Private xui As XUI 'ignore
-	
+	Private timer1 As Timer
 	#Region Drawer_Menu_Variables
 	Private drManager As DrawerManager
 	Private clvDrawer As CustomListView
@@ -16,17 +16,12 @@ Sub Class_Globals
 	'Private objConfig As clsConfig
 	#End Region	
 	Private lstProduct As List
-	' Private rp As RuntimePermissions
 	Private lblData As Label
 	Private lblReading As Label
 	Private currValue As Double
-	
-	' Private ScrollView1 As ScrollView
-	' Private dybtn As cvDynamicButton
 	Private BTA As BluetoothAdmin
 	Private mySerial As Serial
 	Private lstOfFoundDevices As List
-	Type BlueTooth_NameAndMac (Name As String, Mac As String)
 	Private cvDynamicButton1 As cvDynamicButton
 End Sub
 
@@ -36,6 +31,7 @@ Public Sub Initialize As Object
 	lstProduct.Initialize	
 	mySerial.Initialize("mySerial")
 	currValue = -1		
+	timer1.Initialize("timer1", 500)
 	Return Me
 End Sub
 
@@ -50,8 +46,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	drManager.Initialize(Me, "Drawer", Root, 220dip)
 	drManager.myDrawer.CenterPanel.LoadLayout("ProductionPage.bal")
 	drManager.myDrawer.LeftPanel.LoadLayout("sidemenu")
-	' Event handler is B4XPage_MenuClick
-	B4XPages.GetManager.LogEvents = True	
+	' Event handler is B4XPage_MenuClick	
 	B4XPages.AddMenuItem(Me, "Connect Bluetooth")
 	B4XPages.AddMenuItem(Me, "Disconnect Bluetooth")
 	B4XPages.AddMenuItem(Me, "refresh")
@@ -64,9 +59,13 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	Dim svWidth As Double = 100%x-20dip 'ScrollView1.Width
 	LogColor("ScrollView's height: " & svHeight, Colors.Blue)
 	LogColor("ScrollView's width: " & svWidth, Colors.Blue)
-	cvDynamicButton1.setPanelHeightWidth(svHeight, svWidth)
+	cvDynamicButton1.setPanelHeightWidth(svHeight, svWidth)	 
 	lblData.Text = ""
 	lblReading.Text = ""
+	timer1.Enabled = True
+	Wait For timer1_tick
+	timer1.Enabled = False
+	AutoConnectBluetoothDevices
 	' ScrollView1.Panel.Width = svWidth	
 End Sub
 
@@ -111,6 +110,7 @@ Private Sub B4XPage_MenuClick(Tag As String)
 			' reset the num of row to get new data
 			cvDynamicButton1.resetNumOfRow
 			sendProductIntent("query")
+			ProgressDialogShow2("loading (1) ...", True)
 	End Select
 End Sub
 
@@ -196,19 +196,28 @@ Private Sub cvDynamicButton1_LayoutLoaded
 	If lstProduct.Size = 0 Then
 		' sendBack4AppRequest
 		sendProductIntent("query")
+		ProgressDialogShow2("loading (2) ...", True)
 	End If
 End Sub
 ' this event hander - Refresh would be triggered if
 ' custom view pull to refresh in scrollview
 Private Sub cvDynamicButton1_Refresh
-	Log("Pull to refresh")
+'	If cvDynamicButton1.flagIsRefreshing = True Then
+'		
+'		Return
+'	End If
+	Log("Pull to refresh")	
 	' reset the num of row to get new data
 	cvDynamicButton1.resetNumOfRow
 	sendProductIntent("query")
+	ProgressDialogShow2("loading (3) ...", True)
 End Sub
 
 Sub getProductResponse(mapRes As Map)
 	StopService(svcBack4AppProduct)
+	ProgressDialogHide
+	' reset the flag
+'	cvDynamicButton1.flagIsRefreshing = False
 	Dim isSuccess As Boolean = mapRes.Get("issuccess")
 	If isSuccess = False Then
 		Msgbox2Async("Product Menu retrieval error!", "Menu Retrieval", "OK", "", "", Null, True)
@@ -262,14 +271,14 @@ Sub fillTheList(i_lst As List) As Boolean
 	Return True
 End Sub
 
-' Menu Event Handler
-Sub Connect_Click
-	ConnectBluetoothDevices
-End Sub
-' Menu Event Handler
-Sub Disconnect_Click
-	DisconnectBluetoothDevices
-End Sub
+'' Menu Event Handler
+'Sub Connect_Click
+'	ConnectBluetoothDevices
+'End Sub
+'' Menu Event Handler
+'Sub Disconnect_Click
+'	DisconnectBluetoothDevices
+'End Sub
 
 #Region Bluetooth_Event
 Sub BTA_StateChanged (NewState As Int, OldState As Int)
@@ -329,6 +338,23 @@ Private Sub cvDynamicButton1_ButtonClick (itemnum_1 As String)
 	End If
 End Sub
 
+Private Sub AutoConnectBluetoothDevices()
+	If modCommon.mapOfMacAddress.IsInitialized Then
+		For Each name_1 As String In modCommon.mapOfMacAddress.Keys
+			Select Case name_1
+				Case "irxon" ' bluetooth adaptor of scale
+					sendScaleIntent(modCommon.mapOfMacAddress.Get(name_1))
+				Case "XP-365B" ' Xprinter
+					sendFinishedProductIntent("btconnect", modCommon.mapOfMacAddress.Get(name_1), Null)
+				Case "HC-06" ' Huskylens
+					sendHuskylensIntent(modCommon.mapOfMacAddress.Get(name_1))
+				Case Else
+					Continue
+			End Select
+		Next
+	End If
+End Sub
+
 ' Function used to ask user to connect the bluetooth device
 Private Sub ConnectBluetoothDevices()
 	Dim pairedDevices As Map = mySerial.GetPairedDevices
@@ -379,6 +405,7 @@ End Sub
 #Region btScale_EventHandlers
 Private Sub btScale_Connected(issuccess As Boolean)
 	Log("is btScale connected: " & issuccess)
+	ToastMessageShow("is btScale connected: " & issuccess, True)
 End Sub
 
 Private Sub btScale_Disconnected()
@@ -413,6 +440,7 @@ End Sub
 #Region btHuskylens_EventHandlers
 Private Sub btHuskylens_Connected(issuccess As Boolean)
 	Log("Is btHuskylens connected: " & issuccess)
+	ToastMessageShow("Is btHuskylens connected: " & issuccess, True)
 End Sub
 
 Private Sub btHuskylens_Disconnected()

@@ -32,13 +32,22 @@ Sub Class_Globals
 	'''''''''''''''''''''''''''''''''''
 	Private strDate As String
 	Private lstOfProduction As List
+	' Search record UI
+	Private btnSearch As Button
+	Private edtSearch As EditText
+	Private btnClear As Button	
 	' the selected item's index would record here
 	Private SelectedIndex As Int
-	
+	Private timer As Timer
+	' found index when edtSearch is filled by barcode and enter is pressed
+	Dim foundIdx As Int
 End Sub
 
 'You can add more parameters here.
 Public Sub Initialize As Object
+	timer.Initialize("timer1", 100)
+	foundIdx = -1
+	SelectedIndex = -1
 	Return Me
 End Sub
 
@@ -56,8 +65,8 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	Dim PullToRefreshPanel As B4XView = xui.CreatePanel("")
 	PullToRefreshPanel.SetLayoutAnimated(0, 0, 0, 100%x, 70dip)
 	PullToRefreshPanel.LoadLayout("PullToRefresh.bal")
-	Swipe.PullToRefreshPanel = PullToRefreshPanel
-	SelectedIndex = -1
+	Swipe.PullToRefreshPanel = PullToRefreshPanel	
+	edtSearch.RequestFocus
 End Sub
 
 'You can see the list of page related events in the B4XPagesManager object. The event name is B4XPage.
@@ -74,6 +83,7 @@ Private Sub B4XPage_Appear
 	If CLV1.IsInitialized = False Then
 		Return
 	End If
+	edtSearch.Text = ""
 	If CLV1.Size = 0 Then
 		If lstOfProduction.IsInitialized = False Then
 			' when page initialize
@@ -307,4 +317,53 @@ Private Sub getNow() As String
 	dtNow = DateTime.Date(DateTime.Now)
 	DateTime.DateFormat = df
 	Return dtNow
+End Sub
+
+Private Sub btnClear_Click
+	edtSearch.Text = ""
+End Sub
+
+Private Sub edtSearch_EnterPressed
+	searchByBarcode
+End Sub
+
+Private Sub btnSearch_Click
+	searchByBarcode
+End Sub
+
+Private Sub searchByBarcode()
+	timer.Enabled = True
+	wait for timer1_Tick
+	timer.Enabled = False
+	edtSearch.RequestFocus
+	edtSearch.SelectAll
+	If edtSearch.Text.Length <> 10 Then
+		ToastMessageShow("Please input qrcode of finished product!", True)
+		Return
+	End If
+	Dim objectid_1 As String = edtSearch.Text
+	Dim itemnum_1 As String = ""
+	Dim itemname_1 As String = ""
+	foundIdx = -1
+	Dim idx As Int = 0
+	For Each innermap As Map In lstOfProduction
+		If innermap.Get("objectId").As(String) = objectid_1 Then
+			foundIdx = idx
+			itemnum_1 = innermap.Get("itemnum")
+			itemname_1 = innermap.Get("itemname")
+			Exit
+		End If
+		idx = idx + 1
+	Next
+	If foundIdx = -1 Then
+		Msgbox2Async("Item #" & itemnum_1 & " is NOT found!", "Not found", "OK", "Cancel", "", Null, True)
+		Return
+	End If
+	Try
+		'CLV2.JumpToItem(foundIdx)
+		CLV1.ScrollToItem(foundIdx)
+		ToastMessageShow(itemname_1 & " (#" & itemnum_1 & ") is found.", True)
+	Catch
+		Log(LastException)
+	End Try
 End Sub

@@ -16,6 +16,7 @@ Sub Class_Globals
 	Private lstOfProduct As List
 	Private btnSearch As Button
 	Private edtSearch As EditText
+	Private btnClear As Button
 	' Page UI
 	Private CLV2 As CustomListView
 	Private Swipe As CLVSwipe
@@ -30,11 +31,12 @@ Sub Class_Globals
 	Private timer As Timer
 	' found index when edtSearch is filled by barcode and enter is pressed
 	Dim foundIdx As Int
-	Private btnClear As Button
 End Sub
 
 'You can add more parameters here.
 Public Sub Initialize As Object
+	timer.Initialize("timer1", 100)
+	foundIdx = -1
 	Return Me
 End Sub
 
@@ -52,9 +54,7 @@ Private Sub B4XPage_Created (Root1 As B4XView)
 	Dim PullToRefreshPanel As B4XView = xui.CreatePanel("")
 	PullToRefreshPanel.SetLayoutAnimated(0, 0, 0, 100%x, 70dip)
 	PullToRefreshPanel.LoadLayout("PullToRefresh.bal")
-	Swipe.PullToRefreshPanel = PullToRefreshPanel
-	timer.Initialize("timer1", 100)
-	foundIdx = -1
+	Swipe.PullToRefreshPanel = PullToRefreshPanel	
 	edtSearch.RequestFocus
 End Sub
 
@@ -113,16 +113,6 @@ Private Sub createMenu
 		clvDrawer.Add(p, i)
 	Next
 End Sub
-
-'Private Sub edtSearch_FocusChanged (HasFocus As Boolean)
-'	If HasFocus Then
-'		timer.Enabled = True
-'		wait for timer_tick
-'		timer.Enabled = False
-'		edtSearch.RequestFocus
-'		edtSearch.SelectAll	
-'	End If
-'End Sub
 
 Private Sub btnClear_Click
 	edtSearch.Text = ""

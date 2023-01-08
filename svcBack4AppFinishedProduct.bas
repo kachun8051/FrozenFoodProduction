@@ -22,12 +22,14 @@ Sub Process_Globals
 	Private MacAddr As String
 	Private Job As HttpJob
 	Private lstOfProduction As List
+	Private strErrMsg As String
 End Sub
 
 Sub Service_Create
 	objConfig.Initialize
 	btPrinter.Initialize(Me, "btPrinter")
 	lstOfProduction.Initialize
+	strErrMsg = ""
 End Sub
 
 Sub Service_Start (StartingIntent As Intent)
@@ -61,9 +63,10 @@ Sub Service_Start (StartingIntent As Intent)
 			End If
 			MacAddr = param_1
 			If btPrinter.IsInitialized Then
+				' would trigger the event handler btPrinter_Connected
 				btPrinter.Connect2(param_1)
-			End If			
-			CallSubDelayed2(mySender, "btPrinter_Connected", btPrinter.IsBluetoothOn)
+			End If				
+			'CallSubDelayed2(mySender, "btPrinter_Connected", btPrinter.IsBluetoothOn)
 		Case "btdisconnect"
 			If btPrinter.IsInitialized Then
 				btPrinter.DisConnect
@@ -96,6 +99,21 @@ Sub Service_Start (StartingIntent As Intent)
 				Return
 			End If
 			CallSubDelayed2(mySender, "getFinishedProductPrintedResponse", CreateMap("issuccess": True))
+		Case "printtest"
+			strErrMsg = ""
+			If btPrinter.IsBluetoothOn = False Then
+				CallSubDelayed2(mySender, "getPrintTestResponse", _
+					CreateMap("issuccess": False, "errmsg": "btprinter is NOT connected!"))
+				Return
+			End If
+			Dim isTestPrinted As Boolean = PrintTestLabel
+			If isTestPrinted Then
+				CallSubDelayed2(mySender, "getPrintTestResponse", _
+					CreateMap("issuccess": True))
+			Else
+				CallSubDelayed2(mySender, "getPrintTestResponse", _
+					CreateMap("issuccess": False, "errmsg": strErrMsg))
+			End If
 		Case "postandprint"
 			' param_1 for postandprint is json string of object clsFinishedProduct
 			If param_1 = "" Then
@@ -136,6 +154,16 @@ Sub Service_Destroy
 	End If
 End Sub
 
+#Region btPrinter_Events
+
+Private Sub btPrinter_Connected(issuccess As Boolean)
+	CallSubDelayed2(mySender, "btPrinter_Connected", issuccess)
+End Sub
+
+
+
+#End Region
+
 Sub sendBack4AppPost(postingdata As String) As ResumableSub
 	Dim isSuccess As Boolean = False
 	Dim objid As String = ""
@@ -165,6 +193,43 @@ Sub sendBack4AppPost(postingdata As String) As ResumableSub
 	End If
 	j.Release
 	Return CreateMap("issuccess": isSuccess, "objectid": objid)
+End Sub
+
+Sub PrintTestLabel() As Boolean
+	Try
+		btPrinter.Size(50, 38)
+		btPrinter.GAP(1.5,0)
+		btPrinter.DENSITY2(7)
+		btPrinter.DIRECTION(0)
+		btPrinter.REFERENCE(0,0)
+		'Printer2.HOME
+		'Printer2.BACKUP(320)
+		btPrinter.CLS
+		' Dim a As String = DateTime.Date(DateTime.Now) & " " &  DateTime.Time(DateTime.Now) 'ignore
+		btPrinter.TEXT(20, 15, "TSS24.BF2", 0, 1, 2, getDateTime)
+		btPrinter.TEXT(20, 70, "TSS24.BF2", 0, 5, 10, "TEST")
+		btPrinter.PRINT(1,0)
+		btPrinter.EOP
+		Return True
+	Catch
+		LogColor("svcBack4AppFinishedProduct.PrintTestLabel: " & CRLF & LastException.Message, Colors.Red)
+		strErrMsg = LastException.Message
+		Return False
+	End Try
+End Sub
+
+Private Sub getDateTime() As String
+	Dim df As String = DateTime.DateFormat
+	DateTime.DateFormat = "yyyy/MM/dd HH:mm:ss"
+	Dim dtNow As Long = DateTime.Now
+	Dim dt As String = ""
+	Try
+		dt = DateTime.Date(dtNow)
+	Catch
+		Log(LastException)		
+	End Try
+	DateTime.DateFormat = df
+	Return dt
 End Sub
 
 Sub PrintLabel(objid As String, obj As clsProduct, weight As Double) As Boolean

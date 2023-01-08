@@ -14,7 +14,10 @@ Sub Process_Globals
 	' Public listOfProduct As List
 	' The key is item number while the value is clsProduct 
 	Public mapOfProduct As Map
+	' For dictionary of Huskylens' id and corresponding name
 	Public mapOfTrainedData As Map
+	' For dictionary of Bluetooth devices' profile name and corresponding mac address
+	Public mapOfMacAddress As Map
 End Sub
 
 Public Sub getNowForShown() As String
